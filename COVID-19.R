@@ -1,5 +1,5 @@
 # set current working directory
-setwd("~/R")
+setwd("~/SimCOVID-19")
 
 library(JuliaCall)
 julia <- julia_setup()
