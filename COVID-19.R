@@ -1,6 +1,14 @@
 # set current working directory
 setwd("~/SimCOVID-19")
 
+# output
+#
+# grapfical: 0
+# pdf: 1
+# png: 2
+plot_out <- 0
+
+
 library(JuliaCall)
 julia <- julia_setup()
 diffeqr::diffeq_setup()
@@ -29,39 +37,40 @@ len_ger_data <- length(ger_data_confirmed)
 
 #View(data.frame(day=1:len_ger_data, confirmed=ger_data_confirmed, recovered=ger_data_recovered))
 
-pdf("Plots.pdf")
+if (plot_out == 1) pdf("Plots.pdf")
 
+if (plot_out == 2) png("Situation-1.png", width = 640, height = 480)
 plot(ger_data_confirmed , type="l", col = 1, lty = 1)
 lines(ger_data_recovered , type="l", col = 2, lty = 2)
-
+if (plot_out > 1) dev.off()
 
 lm_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
 lm_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered))
 
-plot(lm_data_confirmed , type="p", col = 1, pch = 1)
-lines(lm_data_recovered , type="p", col = 2, pch = 2)
-
 t_0 <- 40
-
+dt_r = 14
 lm_res_1 = lm(ln_x~t, lm_data_confirmed[15:35,])
-lines(15:35,lm_res_1$fitted.values, col = 1, lty = 1)
 lm_res_2 = lm(ln_x~t, lm_data_confirmed[t_0:len_ger_data,])
-lines(t_0:len_ger_data,lm_res_2$fitted.values, col = 1, lty = 2)
+lm_res_3 = lm(ln_x~t, lm_data_recovered[(14+dt_r):(35+dt_r),])
+lm_res_4 = lm(ln_x~t, lm_data_recovered[(t_0+dt_r):len_ger_data,])
 lm_res_1
 lm_res_2
-dt_r = 14
-lm_res_3 = lm(ln_x~t, lm_data_recovered[(14+dt_r):(35+dt_r),])
+lm_res_3
+lm_res_4
+
+
+if (plot_out == 2) png("Situation-2.png", width = 640, height = 480)
+plot(lm_data_confirmed , type="p", col = 1, pch = 1)
+lines(lm_data_recovered , type="p", col = 2, pch = 2)
+lines(15:35,lm_res_1$fitted.values, col = 1, lty = 1)
+lines(t_0:len_ger_data,lm_res_2$fitted.values, col = 1, lty = 2)
 lines((14+dt_r):(35+dt_r),lm_res_3$fitted.values, col = 2, lty = 1)
-lm_res_4 = lm(ln_x~t, lm_data_recovered[(t_0+dt_r):len_ger_data,])
 lines((t_0+dt_r):len_ger_data,lm_res_4$fitted.values, col = 2, lty = 2)
-
+if (plot_out > 1) dev.off()
 
 
 # assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
-#ti = 5.1
-
-# assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
-ti = 4.5
+ti = 5.1
 
 # dx/dt = k * x
 # 1/x * dx = k * dt
@@ -71,7 +80,8 @@ ti = 4.5
 # x = x_0 exp(k * t)
 # x_0 = 1
 # R0 = exp(k * ti) -1
-R0 = exp(k * ti) - 1
+
+R0 = as.numeric(exp(lm_res_2$coefficients[2] * ti) - 1)
 R0
 
 # assume k from ln(x)-plot and correct it by the influece of ti
@@ -127,7 +137,9 @@ t = 0:10000/10000*(250)
 
 sol = diffeqr::ode.solve(f, x_0, tspan, saveat = t)
 
-plot(c(t_0:r_)-t_0, ger_data_confirmed[c(t_0:50),1], 
+
+if (plot_out == 2) png("Modell_vs_Situation-1.png", width = 640, height = 480)
+plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1], 
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Confirmed cases")
 lines(sol$t, sol$u[,2]+sol$u[,3]+sol$u[,4], lty=2)
@@ -142,8 +154,10 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
        ncol=1)
 title("Situation COVID-19 in Germany",
       sub="Created by Sören Thiering 3/14/20. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out > 1) dev.off()
 
 
+if (plot_out == 2) png("Modell_vs_Situation-2.png", width = 640, height = 480)
 plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1]/x_max*100, 
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases [%]")
@@ -159,7 +173,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
        ncol=1)
 title("Situation COVID-19 in Germany",
       sub="Created by Sören Thiering 3/14/20. Email: soeren.thiering@hs-anhalt.de")
-
+if (plot_out > 1) dev.off()
 
 t_0 <- 51
 x_0 <- c(x_max - ger_data_confirmed[t_0], ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0], ger_data_recovered[t_0], ger_data_deaths[t_0])
@@ -168,6 +182,7 @@ t = 0:10000/10000*(250)
 
 sol = diffeqr::ode.solve(f, x_0, tspan, saveat = t)
 
+if (plot_out == 2) png("Forecast-1.png", width = 640, height = 480)
 plot(sol$t-ti,sol$u[,1],
      type="l", 
      xlab=paste("Days after", rnames[t_0]), 
@@ -189,8 +204,9 @@ legend("topright", legend <- c("noninfected","incubation","recovered","deaths","
        ncol=1)
 title("Forecast COVID-19 in Germany", 
       sub="Created by Sören Thiering 3/14/20. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out > 1) dev.off()
 
-
+if (plot_out == 2) png("Forecast-2.png", width = 640, height = 480)
 plot(sol$t-ti,sol$u[,1]/x_max*100,
      type="l", 
      xlab=paste("Days after", rnames[t_0]),
@@ -212,5 +228,6 @@ legend("topright", legend <- c("noninfected","incubation","recovered","deaths","
        ncol=1)
 title("Forecast COVID-19 in Germany", 
       sub="Created by Sören Thiering 3/14/20. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out > 1) dev.off()
 
-dev.off() 
+if (plot_out == 1) dev.off() 
