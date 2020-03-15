@@ -6,7 +6,7 @@ setwd("~/SimCOVID-19")
 # grapfical: 0
 # pdf: 1
 # png: 2
-plot_out <- 0
+plot_out <- 2
 
 
 library(JuliaCall)
@@ -47,7 +47,7 @@ if (plot_out > 1) dev.off()
 lm_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
 lm_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered))
 
-t_0 <- 40
+t_0 <- 42
 dt_r = 14
 lm_res_1 = lm(ln_x~t, lm_data_confirmed[15:35,])
 lm_res_2 = lm(ln_x~t, lm_data_confirmed[t_0:len_ger_data,])
@@ -72,6 +72,16 @@ if (plot_out > 1) dev.off()
 # assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
 ti = 5.1
 
+# assume k_raw from ln(x)-plot
+k_raw = lm_res_2$coefficients[2]
+
+# example from Kentaro Iwata and Chisato Miyakoshi
+# https://www.preprints.org/manuscript/202002.0179/v1
+# https://gist.github.com/skoba/abc760104be559881ab7269372bb03ea#file-covid19-py
+# ti = 10
+# R0 = 3
+# k_raw = log(R0 + 1)/ti
+
 # dx/dt = k * x
 # 1/x * dx = k * dt
 # integrate
@@ -81,11 +91,11 @@ ti = 5.1
 # x_0 = 1
 # R0 = exp(k * ti) -1
 
-R0 = as.numeric(exp(lm_res_2$coefficients[2] * ti) - 1)
+R0 = as.numeric(exp(k_raw * ti) - 1)
 R0
 
-# assume k from ln(x)-plot and correct it by the influece of ti
-k <- lm_res_2$coefficients[2] + lm_res_2$coefficients[2] * exp(-lm_res_2$coefficients[2] * ti)
+# correct k_raw by the influece of ti
+k <- k_raw + k_raw * exp(-k_raw * ti)
 
 # assume 0.2% deaths from https://www.lungenaerzte-im-netz.de/krankheiten/covid-19/symptome-krankheitsverlauf/
 kd_1 <- 0.002
@@ -101,42 +111,70 @@ kd_2 <- as.numeric(
         )
       )
 
+# assume k_bed from max kd_2 (Hubei / China)
+k_bed <- kd_2
+
 # http://www.gbe-bund.de/gbe10/I?I=838:37792217D 
 n_bed_max <- 28031 
 
 # assume population of germany from https://de.wikipedia.org/wiki/Deutschland (03/13/20)
 x_max <- 83.019213e6
 
+#      1  2      3   4          5      6     7
+p <- c(k, x_max, ti, n_bed_max, k_bed, kd_1, kd_2)
 
-f <- function(x, p, t) 
-{
+f = JuliaCall::julia_eval("function f(du, u, h, p, t)
+  # parameter
+  k         = p[1]
+  x_max     = p[2]
+  ti        = p[3]
+  n_bed_max = p[4]
+  k_bed     = p[5]
+  kd_1      = p[6]
+  kd_2      = p[7]
+  
   # - infection
-  dx_1 = - k * x[1] / x_max * x[2]
+  du[1] = - k * u[1] / x_max * u[2]
   
   # + infektion - (recovered + deaths)
-  dx_2 = + k * x[1] / x_max * x[2] - k * exp(-k * ti) * x[2]
+  du[2] = + k * u[1] / x_max * u[2] - k * h(p, t - ti)[1] / x_max * h(p, t - ti)[2] 
   
   # kd
-  if ((x[2] * kd_2) > n_bed_max) kd = kd_1 * n_bed_max / (x[2] * kd_2) + kd_2 * ((x[2] * kd_2) - n_bed_max) / (x[2] * kd_2)
-  else kd = kd_1
-    
+  if ((u[2] * k_bed) > n_bed_max) 
+    kd = kd_1 * n_bed_max / (u[2] * k_bed) + kd_2 * ((u[2] * k_bed) - n_bed_max) / (u[2] * k_bed)
+  else 
+    kd = kd_1
+  end
+
   # + recovered
-  dx_3 = + (1 - kd) * k * exp(-k * ti) * x[2]
+  # approximation of history data
+  du[3] = + (1 - kd) * k * h(p, t - ti)[1] / x_max * h(p, t - ti)[2]
   
   # + deaths
-  dx_4 = + kd * k * exp(-k * ti) * x[2]
-  
-  return(c(dx_1, dx_2, dx_3, dx_4))
+  du[4] = + kd * k * h(p, t - ti)[1] / x_max * h(p, t - ti)[2]
+
+end")
+
+
+# dx/dt = k * x
+# 1/x * dx = k * dt
+# integrate
+# ln(x) - ln(x_0) = k * t
+# x / x_0 = exp(k * t)
+# x = x_0 exp(k * t)
+# x_0 = 1
+h_0 <- function(p, t)
+{
+  return(u_0 * exp(p[1] * t))
 }
 
-
 t_0 <- 40
-x_0 <- c(x_max - ger_data_confirmed[t_0], ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0], ger_data_recovered[t_0], ger_data_deaths[t_0])
+u_0 <- c(x_max - ger_data_confirmed[t_0], ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0], ger_data_recovered[t_0], ger_data_deaths[t_0])
 tspan <- list(0,250)
+constant_lags = c(ti)
 t = 0:10000/10000*(250)
 
-sol = diffeqr::ode.solve(f, x_0, tspan, saveat = t)
-
+sol = diffeqr::dde.solve('f', u_0, h_0, p=p, tspan, saveat = t, constant_lags=constant_lags)
 
 if (plot_out == 2) png("Modell_vs_Situation-1.png", width = 640, height = 480)
 plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1], 
@@ -153,7 +191,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
        x.intersp = 2.5,
        ncol=1)
 title("Situation COVID-19 in Germany",
-      sub="Created by Sören Thiering 3/14/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 3/15/20. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
@@ -172,15 +210,17 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
        x.intersp = 2.5,
        ncol=1)
 title("Situation COVID-19 in Germany",
-      sub="Created by Sören Thiering 3/14/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 3/15/20. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
-t_0 <- 51
-x_0 <- c(x_max - ger_data_confirmed[t_0], ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0], ger_data_recovered[t_0], ger_data_deaths[t_0])
+t_0 <- 53
+u_0 <- c(x_max - ger_data_confirmed[t_0], ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0], ger_data_recovered[t_0], ger_data_deaths[t_0])
 tspan <- list(0,250)
+constant_lags = c(ti)
 t = 0:10000/10000*(250)
 
-sol = diffeqr::ode.solve(f, x_0, tspan, saveat = t)
+
+sol = diffeqr::dde.solve('f', u_0, h_0, p=p, tspan, saveat = t, constant_lags=constant_lags)
 
 if (plot_out == 2) png("Forecast-1.png", width = 640, height = 480)
 plot(sol$t-ti,sol$u[,1],
@@ -203,7 +243,7 @@ legend("topright", legend <- c("noninfected","incubation","recovered","deaths","
        x.intersp = 2.5,
        ncol=1)
 title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 3/14/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 3/15/20. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 2) png("Forecast-2.png", width = 640, height = 480)
@@ -227,7 +267,8 @@ legend("topright", legend <- c("noninfected","incubation","recovered","deaths","
        x.intersp = 2.5,
        ncol=1)
 title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 3/14/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 3/15/20. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 1) dev.off() 
+
