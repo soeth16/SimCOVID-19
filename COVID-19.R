@@ -40,19 +40,37 @@ len_ger_data <- length(ger_data_confirmed)
 if (plot_out == 1) pdf("Plots.pdf")
 
 if (plot_out == 2) png("Situation-1.png", width = 640, height = 480)
-plot(ger_data_confirmed , type="l", col = 1, lty = 1)
+plot(ger_data_confirmed, 
+     type="l", 
+     col = 1, 
+     lty = 1,
+     xlab=paste("Days after", rnames[1]), 
+     ylab="Cases")
 lines(ger_data_recovered , type="l", col = 2, lty = 2)
+legend("topleft", legend <- c("Confirmed cases", "Recovered cases"), 
+       col=c(1,2),
+       bg="white",
+       pch=c(-1,-1),
+       lwd=1,
+       lty=c(1,2),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+title("Situation COVID-19 in Germany",
+      sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 lm_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
 lm_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered))
 
-t_0 <- 42
+tc_0 <- 42
+tr_0 <- 35
 dt_r = 14
+
 lm_res_1 = lm(ln_x~t, lm_data_confirmed[15:35,])
-lm_res_2 = lm(ln_x~t, lm_data_confirmed[t_0:len_ger_data,])
+lm_res_2 = lm(ln_x~t, lm_data_confirmed[tc_0:len_ger_data,])
 lm_res_3 = lm(ln_x~t, lm_data_recovered[(14+dt_r):(35+dt_r),])
-lm_res_4 = lm(ln_x~t, lm_data_recovered[(t_0+dt_r):len_ger_data,])
+lm_res_4 = lm(ln_x~t, lm_data_recovered[(tr_0+dt_r):len_ger_data,])
 lm_res_1
 lm_res_2
 lm_res_3
@@ -60,12 +78,28 @@ lm_res_4
 
 
 if (plot_out == 2) png("Situation-2.png", width = 640, height = 480)
-plot(lm_data_confirmed , type="p", col = 1, pch = 1)
+plot(lm_data_confirmed,
+     type="p", 
+     col = 1, 
+     pch = 1,
+     xlab=paste("Days after", rnames[1]), 
+     ylab="ln( cases )")
 lines(lm_data_recovered , type="p", col = 2, pch = 2)
 lines(15:35,lm_res_1$fitted.values, col = 1, lty = 1)
-lines(t_0:len_ger_data,lm_res_2$fitted.values, col = 1, lty = 2)
+lines(tc_0:len_ger_data,lm_res_2$fitted.values, col = 1, lty = 2)
 lines((14+dt_r):(35+dt_r),lm_res_3$fitted.values, col = 2, lty = 1)
-lines((t_0+dt_r):len_ger_data,lm_res_4$fitted.values, col = 2, lty = 2)
+lines((tr_0+dt_r):len_ger_data,lm_res_4$fitted.values, col = 2, lty = 2)
+legend("topleft", legend <- c("Confirmed cases", "Recovered cases"), 
+       col=c(1,2),
+       bg="white",
+       pch=c(-1,-1),
+       lwd=1,
+       lty=c(1,2),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+title("Situation COVID-19 in Germany",
+      sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
@@ -190,7 +224,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Situation COVID-19 in Germany",
+title("Situation vs Modell COVID-19 in Germany",
       sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
@@ -209,7 +243,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Situation COVID-19 in Germany",
+title("Situation vs Modell COVID-19 in Germany",
       sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
