@@ -6,7 +6,7 @@ setwd("~/SimCOVID-19")
 # grapfical: 0
 # pdf: 1
 # png: 2
-plot_out <- 2
+plot_out <- 0
 
 
 library(JuliaCall)
@@ -89,12 +89,12 @@ lines(15:35,lm_res_1$fitted.values, col = 1, lty = 1)
 lines(tc_0:len_ger_data,lm_res_2$fitted.values, col = 1, lty = 2)
 lines((14+dt_r):(35+dt_r),lm_res_3$fitted.values, col = 2, lty = 1)
 lines((tr_0+dt_r):len_ger_data,lm_res_4$fitted.values, col = 2, lty = 2)
-legend("topleft", legend <- c("Confirmed cases", "Recovered cases"), 
-       col=c(1,2),
+legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 1st phase", "Regression 2nd phase (used for modelling)"), 
+       col=c(1,2,16,16),
        bg="white",
-       pch=c(-1,-1),
+       pch=c(1,2,-1,-1),
        lwd=1,
-       lty=c(1,2),
+       lty=c(-1,-1,1,2),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
