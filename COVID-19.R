@@ -215,7 +215,7 @@ plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1],
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Confirmed cases")
 lines(sol$t, sol$u[,2]+sol$u[,3]+sol$u[,4], lty=2)
-legend("topleft", legend <- c("Confirmed cases", "Modeled cases"), 
+legend("topleft", legend <- c("Confirmed cases", "Modelled cases"), 
        col=1,
        bg="white",
        pch=c(1,-1),
@@ -234,7 +234,7 @@ plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1]/x_max*10
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases [%]")
 lines(sol$t, (sol$u[,2]+sol$u[,3]+sol$u[,4])/x_max*100, lty=2)
-legend("topleft", legend <- c("Confirmed cases", "Modeled cases"), 
+legend("topleft", legend <- c("Confirmed cases", "Modelled cases"), 
        col=1,
        bg="white",
        pch=c(1,-1),
