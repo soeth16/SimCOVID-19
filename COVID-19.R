@@ -57,7 +57,7 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases"),
        x.intersp = 2.5,
        ncol=1)
 title("Situation COVID-19 in Germany",
-      sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 lm_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
@@ -99,7 +99,7 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 
        x.intersp = 2.5,
        ncol=1)
 title("Situation COVID-19 in Germany",
-      sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
@@ -225,7 +225,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modelled cases"),
        x.intersp = 2.5,
        ncol=1)
 title("Situation vs Modell COVID-19 in Germany",
-      sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
@@ -244,10 +244,10 @@ legend("topleft", legend <- c("Confirmed cases", "Modelled cases"),
        x.intersp = 2.5,
        ncol=1)
 title("Situation vs Modell COVID-19 in Germany",
-      sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
-t_0 <- 54
+t_0 <- 55
 u_0 <- c(x_max - ger_data_confirmed[t_0], ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0], ger_data_recovered[t_0], ger_data_deaths[t_0])
 tspan <- list(0,250)
 constant_lags = c(ti)
@@ -277,7 +277,7 @@ legend("topright", legend <- c("noninfected","incubation","recovered","deaths","
        x.intersp = 2.5,
        ncol=1)
 title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 2) png("Forecast-2.png", width = 640, height = 480)
@@ -301,7 +301,7 @@ legend("topright", legend <- c("noninfected","incubation","recovered","deaths","
        x.intersp = 2.5,
        ncol=1)
 title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 3/16/20. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 1) dev.off() 
