@@ -268,7 +268,7 @@ lines(sol$t-ti, sol$u[,2], lty=2, col=2)
 lines(sol$t-ti, sol$u[,3], lty=3, col=3)
 lines(sol$t-ti, sol$u[,4], lty=4, col=4)
 lines(sol$t-ti, (sol$u[,2]+sol$u[,3]+sol$u[,4]), lty=5, col=16)
-legend("topright", legend <- c("noninfected","incubation","recovered","deaths","total infected"), 
+legend("topright", legend <- c("noninfected","incubation","recovered + infected","deaths","total infected"), 
        col=c(1:4,16),
        bg="white",
        lwd=1,
@@ -292,7 +292,7 @@ lines(sol$t-ti, sol$u[,2]/x_max*100, lty=2, col=2)
 lines(sol$t-ti, sol$u[,3]/x_max*100, lty=3, col=3)
 lines(sol$t-ti, sol$u[,4]/x_max*100, lty=4, col=4)
 lines(sol$t-ti, (sol$u[,2]+sol$u[,3]+sol$u[,4])/x_max*100, lty=5, col=16)
-legend("topright", legend <- c("noninfected","incubation","recovered","deaths","total infected"), 
+legend("topright", legend <- c("noninfected","incubation","recovered + infected","deaths","total infected"), 
        col=c(1:4,16),
        bg="white",
        lwd=1,
