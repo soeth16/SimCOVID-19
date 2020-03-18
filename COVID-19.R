@@ -6,7 +6,7 @@ setwd("~/SimCOVID-19")
 # grapfical: 0
 # pdf: 1
 # png: 2
-plot_out <- 0
+plot_out <- 2
 
 
 library(JuliaCall)
@@ -56,7 +56,7 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases"),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Situation COVID-19 in Germany",
+if (plot_out != 2) title("Situation COVID-19 in Germany",
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
@@ -89,7 +89,7 @@ lines(15:35,lm_res_1$fitted.values, col = 1, lty = 1)
 lines(tc_0:len_ger_data,lm_res_2$fitted.values, col = 1, lty = 2)
 lines((14+dt_r):(35+dt_r),lm_res_3$fitted.values, col = 2, lty = 1)
 lines((tr_0+dt_r):len_ger_data,lm_res_4$fitted.values, col = 2, lty = 2)
-legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 1st phase", "Regression 2nd phase (used for modelling)"), 
+legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 1st phase", "Regression 2nd phase (used for modeling)"), 
        col=c(1,2,16,16),
        bg="white",
        pch=c(1,2,-1,-1),
@@ -98,7 +98,7 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Situation COVID-19 in Germany",
+if (plot_out != 2) title("Situation COVID-19 in Germany",
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
@@ -230,12 +230,12 @@ t = 0:10000/10000*(250)
 
 sol = diffeqr::dde.solve('f', u_0, h_0, p=p, tspan, saveat = t, constant_lags=constant_lags)
 
-if (plot_out == 2) png("Modell_vs_Situation-1.png", width = 640, height = 480)
+if (plot_out == 2) png("Model_vs_Situation-1.png", width = 640, height = 480)
 plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1], 
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Confirmed cases")
 lines(sol$t, sol$u[,3]+sol$u[,4]+sol$u[,5]+sol$u[,6], lty=2)
-legend("topleft", legend <- c("Confirmed cases", "Modelled cases"), 
+legend("topleft", legend <- c("Confirmed cases", "Modeled cases"), 
        col=1,
        bg="white",
        pch=c(1,-1),
@@ -244,17 +244,17 @@ legend("topleft", legend <- c("Confirmed cases", "Modelled cases"),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Situation vs Modell COVID-19 in Germany",
+if (plot_out != 2) title("Situation vs Model COVID-19 in Germany",
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
-if (plot_out == 2) png("Modell_vs_Situation-2.png", width = 640, height = 480)
+if (plot_out == 2) png("Model_vs_Situation-2.png", width = 640, height = 480)
 plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1]/x_max*100, 
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases [%]")
 lines(sol$t, (sol$u[,3]+sol$u[,4]+sol$u[,5]+sol$u[,6])/x_max*100, lty=2)
-legend("topleft", legend <- c("Confirmed cases", "Modelled cases"), 
+legend("topleft", legend <- c("Confirmed cases", "Modeled cases"), 
        col=1,
        bg="white",
        pch=c(1,-1),
@@ -263,7 +263,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modelled cases"),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Situation vs Modell COVID-19 in Germany",
+if (plot_out != 2) title("Situation vs Model COVID-19 in Germany",
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
@@ -304,7 +304,7 @@ legend("topright", legend <- c("Susceptible (noninfected)", "Exposed (incubation
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Forecast COVID-19 in Germany", 
+if (plot_out != 2) title("Forecast COVID-19 in Germany", 
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
@@ -330,7 +330,7 @@ legend("topright", legend <- c("Susceptible (noninfected)", "Exposed (incubation
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Forecast COVID-19 in Germany", 
+if (plot_out != 2) title("Forecast COVID-19 in Germany", 
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
@@ -357,7 +357,7 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Forecast COVID-19 in Germany", 
+if (plot_out != 2) title("Forecast COVID-19 in Germany", 
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
@@ -378,7 +378,7 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-title("Forecast COVID-19 in Germany", 
+if (plot_out != 2) title("Forecast COVID-19 in Germany", 
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
