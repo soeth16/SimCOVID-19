@@ -57,7 +57,7 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases"),
        x.intersp = 2.5,
        ncol=1)
 title("Situation COVID-19 in Germany",
-      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 lm_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
@@ -99,12 +99,15 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 
        x.intersp = 2.5,
        ncol=1)
 title("Situation COVID-19 in Germany",
-      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
 # assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
-ti = 5.1
+te = 5.1
+ti = 12
+th = 8
+thi = 12
 
 # assume k_raw from ln(x)-plot
 k_raw = lm_res_2$coefficients[2]
@@ -125,67 +128,77 @@ k_raw = lm_res_2$coefficients[2]
 # x_0 = 1
 # R0 = exp(k * ti) -1
 
-R0 = as.numeric(exp(k_raw * ti) - 1)
+R0 = as.numeric(exp(k_raw * te) - 1)
 R0
-
-# correct k_raw by the influece of ti
-k <- k_raw + k_raw * exp(-k_raw * ti)
 
 # assume 0.2% deaths from https://www.lungenaerzte-im-netz.de/krankheiten/covid-19/symptome-krankheitsverlauf/
 kd_1 <- 0.002
 
 # assume Hubei / China
 kd_2 <- as.numeric(
-        subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,])) 
-        /
-        (
-          subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,]))
-          +
-          subset(csse_covid_19_time_series_recovered, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,]))
-        )
-      )
+  subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,])) 
+  /
+    (
+      subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,]))
+      +
+        subset(csse_covid_19_time_series_recovered, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,]))
+    )
+)
 
 # assume k_bed from max kd_2 (Hubei / China)
-k_bed <- kd_2
+kh <- kd_2
 
 # http://www.gbe-bund.de/gbe10/I?I=838:37792217D 
-n_bed_max <- 28031 
+nh_max <- 28031 
 
 # assume population of germany from https://de.wikipedia.org/wiki/Deutschland (03/13/20)
 x_max <- 83.019213e6
 
-#      1  2      3   4          5      6     7
-p <- c(k, x_max, ti, n_bed_max, k_bed, kd_1, kd_2)
+# correct k_raw by the influece of te, ti, th, thi and kh
+k <- k_raw + k_raw * exp(-k_raw * (ti * (1-kh) + (th+thi) * kh - te)) 
+
+# parameter vector
+#      1  2      3   4   5   6    7       8   9     10
+p <- c(k, x_max, te, ti, th, thi, nh_max, kh, kd_1, kd_2)
 
 f = JuliaCall::julia_eval("function f(du, u, h, p, t)
   # parameter
-  k         = p[1]
-  x_max     = p[2]
-  ti        = p[3]
-  n_bed_max = p[4]
-  k_bed     = p[5]
-  kd_1      = p[6]
-  kd_2      = p[7]
+  k       = p[1]
+  x_max   = p[2]
+  te      = p[3]
+  ti      = p[4]
+  th      = p[5]
+  thi     = p[6]
+  nh_max  = p[7]
+  kh      = p[8]
+  kd_1    = p[9]
+  kd_2    = p[10]
   
-  # - infection
+  # Suspected
   du[1] = - k * u[1] / x_max * u[2]
   
-  # + infektion - (recovered + deaths)
-  du[2] = + k * u[1] / x_max * u[2] - k * h(p, t - ti)[1] / x_max * h(p, t - ti)[2] 
+  # Exposed / Incubating
+  du[2] = + k * u[1] / x_max * u[2] - k * h(p, t - te)[1] / x_max * h(p, t - te)[2] 
   
   # kd
-  if ((u[2] * k_bed) > n_bed_max) 
-    kd = kd_1 * n_bed_max / (u[2] * k_bed) + kd_2 * ((u[2] * k_bed) - n_bed_max) / (u[2] * k_bed)
+  if (u[4] > nh_max) 
+    kd = kd_1 * nh_max / u[4] + kd_2 * (u[4] - nh_max) / u[4]
   else 
     kd = kd_1
   end
 
-  # + recovered
-  # approximation of history data
-  du[3] = + (1 - kd) * k * h(p, t - ti)[1] / x_max * h(p, t - ti)[2]
+  # Infected
+  du[3] = + k * h(p, t - te)[1] / x_max * h(p, t - te)[2] - k * h(p, t - te - ti)[1] / x_max * h(p, t - te - ti)[2] * (1-kh)  - k * h(p, t - te - th)[1] / x_max * h(p, t - te - th)[2] * kh
+
+  # Hostspitalisation 
+  du[4] = + k * h(p, t - te - th)[1] / x_max * h(p, t - te - th)[2] * kh - k * h(p, t - te - th - thi)[1] / x_max * h(p, t - te - th - thi)[2] * kh
   
-  # + deaths
-  du[4] = + kd * k * h(p, t - ti)[1] / x_max * h(p, t - ti)[2]
+  # Recovered
+  du[5] = + k * h(p, t - te - ti)[1] / x_max * h(p, t - te - ti)[2] * (1-kh) + k * h(p, t - te - th - thi)[1] / x_max * h(p, t - te - th - thi)[2] * (kh - kd)
+
+  # Deaths
+  du[6] = + k * h(p, t - te - th - thi)[1] / x_max * h(p, t - te - th - thi)[2] * kd
+
 
 end")
 
@@ -203,9 +216,16 @@ h_0 <- function(p, t)
 }
 
 t_0 <- 40
-u_0 <- c(x_max - ger_data_confirmed[t_0], ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0], ger_data_recovered[t_0], ger_data_deaths[t_0])
+S <-x_max - ger_data_confirmed[t_0]
+I <- ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0]
+E <- I * exp(k*5.1)
+I <- I * 0.95
+H <- I * 0.05
+R <- ger_data_recovered[t_0]
+D <- ger_data_deaths[t_0]
+u_0 <- c(S, E, I, H, R, D)
 tspan <- list(0,250)
-constant_lags = c(ti)
+constant_lags = c(ti+8)
 t = 0:10000/10000*(250)
 
 sol = diffeqr::dde.solve('f', u_0, h_0, p=p, tspan, saveat = t, constant_lags=constant_lags)
@@ -214,7 +234,7 @@ if (plot_out == 2) png("Modell_vs_Situation-1.png", width = 640, height = 480)
 plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1], 
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Confirmed cases")
-lines(sol$t, sol$u[,2]+sol$u[,3]+sol$u[,4], lty=2)
+lines(sol$t, sol$u[,3]+sol$u[,4]+sol$u[,5]+sol$u[,6], lty=2)
 legend("topleft", legend <- c("Confirmed cases", "Modelled cases"), 
        col=1,
        bg="white",
@@ -225,7 +245,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modelled cases"),
        x.intersp = 2.5,
        ncol=1)
 title("Situation vs Modell COVID-19 in Germany",
-      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
@@ -233,7 +253,7 @@ if (plot_out == 2) png("Modell_vs_Situation-2.png", width = 640, height = 480)
 plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1]/x_max*100, 
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases [%]")
-lines(sol$t, (sol$u[,2]+sol$u[,3]+sol$u[,4])/x_max*100, lty=2)
+lines(sol$t, (sol$u[,3]+sol$u[,4]+sol$u[,5]+sol$u[,6])/x_max*100, lty=2)
 legend("topleft", legend <- c("Confirmed cases", "Modelled cases"), 
        col=1,
        bg="white",
@@ -244,11 +264,18 @@ legend("topleft", legend <- c("Confirmed cases", "Modelled cases"),
        x.intersp = 2.5,
        ncol=1)
 title("Situation vs Modell COVID-19 in Germany",
-      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 t_0 <- 55
-u_0 <- c(x_max - ger_data_confirmed[t_0], ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0], ger_data_recovered[t_0], ger_data_deaths[t_0])
+S <-x_max - ger_data_confirmed[t_0]
+I <- ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0]
+E <- I * exp(k*5.1)
+I <- I * 0.95
+H <- I * 0.05
+R <- ger_data_recovered[t_0]
+D <- ger_data_deaths[t_0]
+u_0 <- c(S, E, I, H, R, D)
 tspan <- list(0,250)
 constant_lags = c(ti)
 t = 0:10000/10000*(250)
@@ -267,17 +294,18 @@ plot(sol$t-ti,sol$u[,1],
 lines(sol$t-ti, sol$u[,2], lty=2, col=2)
 lines(sol$t-ti, sol$u[,3], lty=3, col=3)
 lines(sol$t-ti, sol$u[,4], lty=4, col=4)
-lines(sol$t-ti, (sol$u[,2]+sol$u[,3]+sol$u[,4]), lty=5, col=16)
-legend("topright", legend <- c("noninfected","incubation","recovered + infected","deaths","total infected"), 
-       col=c(1:4,16),
+lines(sol$t-ti, sol$u[,5], lty=5, col=5)
+lines(sol$t-ti, sol$u[,6], lty=6, col=6)
+lines(sol$t-ti, (sol$u[,2]+sol$u[,3]+sol$u[,4]+sol$u[,5]+sol$u[,6]), lty=7, col=16)
+legend("topright", legend <- c("Susceptible (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"),       col=c(1:6,16),
        bg="white",
        lwd=1,
-       lty=c(1:5),
+       lty=c(1:7),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
 title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 2) png("Forecast-2.png", width = 640, height = 480)
@@ -291,18 +319,67 @@ plot(sol$t-ti,sol$u[,1]/x_max*100,
 lines(sol$t-ti, sol$u[,2]/x_max*100, lty=2, col=2)
 lines(sol$t-ti, sol$u[,3]/x_max*100, lty=3, col=3)
 lines(sol$t-ti, sol$u[,4]/x_max*100, lty=4, col=4)
-lines(sol$t-ti, (sol$u[,2]+sol$u[,3]+sol$u[,4])/x_max*100, lty=5, col=16)
-legend("topright", legend <- c("noninfected","incubation","recovered + infected","deaths","total infected"), 
-       col=c(1:4,16),
+lines(sol$t-ti, sol$u[,5]/x_max*100, lty=5, col=5)
+lines(sol$t-ti, sol$u[,6]/x_max*100, lty=6, col=6)
+lines(sol$t-ti, (sol$u[,2]+sol$u[,3]+sol$u[,4]+sol$u[,5]+sol$u[,6])/x_max*100, lty=7, col=16)
+legend("topright", legend <- c("Susceptible (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"), 
+       col=c(1:6,16),
        bg="white",
        lwd=1,
-       lty=c(1:5),
+       lty=c(1:7),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
 title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 03/17/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out > 1) dev.off()
+
+
+max(sol$u[,4])
+max(sol$u[,4])/x_max*100
+max(sol$u[,4])/nh_max
+
+
+if (plot_out == 2) png("Forecast-ARDS-1.png", width = 640, height = 480)
+plot(sol$t-ti, sol$u[,4], 
+     type="l",
+     xlab=paste("Days after", rnames[t_0]), 
+     ylab="Cases", 
+     ylim=c(0,max(sol$u[,6])), 
+     xlim=c(0,100), 
+     lty=1, col=1)
+lines(sol$t-ti, sol$u[,6], type="l", lty=2, col=2)
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"), 
+       col=c(1:6,16),
+       bg="white",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+title("Forecast COVID-19 in Germany", 
+      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out > 1) dev.off()
+
+if (plot_out == 2) png("Forecast-ARDS-2.png", width = 640, height = 480)
+plot(sol$t-ti, sol$u[,4]/x_max*100, 
+     type="l",
+     xlab=paste("Days after", rnames[t_0]), 
+     ylab="Cases [%]", 
+     ylim=c(0,max(sol$u[,6])/x_max*100), 
+     xlim=c(0,100), 
+     lty=1, col=1)
+lines(sol$t-ti, sol$u[,6]/x_max*100, type="l", lty=2, col=2)
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"), 
+       col=c(1:6,16),
+       bg="white",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+title("Forecast COVID-19 in Germany", 
+      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 1) dev.off() 
-
