@@ -12,16 +12,16 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 **parameter:**
 
 ```R
-k       = 0.3009135
-x_max   = 83019213
-te      = 5.1
-ti      = 12
-th      = 8
-thi     = 12
-nh_max  = 28031
-kh      = 0.05262713
-kd_1    = 0.002
-kd_2    = 0.05262713
+k       = 0.3009135     # growth rate
+x_max   = 83019213      # max inahbitants
+te      = 5.1           # exposed / incubation time 
+ti      = 12            # time of usual infection
+th      = 8             # time until hostspitalisation
+thi     = 14            # time for hostspitalisation with ARDS
+nh_max  = 28031         # max intensive beds for treating ARDS
+kh      = 0.05262713    # propotion factor for hostspitalisation with ARDS
+kd_1    = 0.002         # propotion factor deaths with hostspitalisation
+kd_2    = 0.05262713    # propotion factor deaths without hostspitalisation
 ```
 
 ```R

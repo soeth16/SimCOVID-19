@@ -107,7 +107,7 @@ if (plot_out > 1) dev.off()
 te = 5.1
 ti = 12
 th = 8
-thi = 14
+thi = 12
 
 # assume k_raw from ln(x)-plot
 k_raw = ln_res_2$coefficients[2]
@@ -135,7 +135,7 @@ R0_plot$t <- R0_plot$t - R0_plot$t[1]
 plot(R0_plot$t, R0_plot$R0, 
      type = "p", 
      ylim=c(0,6),
-     xlab=paste("Days after", rnames[40]),
+     xlab=paste("Days after", rnames[tc_0]),
      ylab="Basic Reproductive Number R0")
 lines(lowess(R0_plot),lty=2,col=2)
 lines(c(0,length(R0_plot$R0)-1), c(1, 1),lty=3,col=3)
@@ -185,16 +185,16 @@ p <- c(k, x_max, te, ti, th, thi, nh_max, kh, kd_1, kd_2)
 
 f = JuliaCall::julia_eval("function f(du, u, h, p, t)
   # parameter
-  k       = p[1]
-  x_max   = p[2]
-  te      = p[3]
-  ti      = p[4]
-  th      = p[5]
-  thi     = p[6]
-  nh_max  = p[7]
-  kh      = p[8]
-  kd_1    = p[9]
-  kd_2    = p[10]
+  k       = p[1]    # growth rate
+  x_max   = p[2]    # max inahbitants
+  te      = p[3]    # exposed / incubation time 
+  ti      = p[4]    # time of usual infection
+  th      = p[5]    # time until hostspitalisation
+  thi     = p[6]    # time for hostspitalisation with ARDS
+  nh_max  = p[7]    # max intensive beds for treating ARDS
+  kh      = p[8]    # propotion factor for hostspitalisation with ARDS
+  kd_1    = p[9]    # propotion factor deaths with hostspitalisation
+  kd_2    = p[10]   # propotion factor deaths without hostspitalisation
   
   # Suspected
   du[1] = - k * u[1] / x_max * u[2]
