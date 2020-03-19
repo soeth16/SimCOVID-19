@@ -6,7 +6,7 @@ setwd("~/SimCOVID-19")
 # grapfical: 0
 # pdf: 1
 # png: 2
-plot_out <- 2
+plot_out <- 1
 
 
 library(JuliaCall)
@@ -60,35 +60,35 @@ if (plot_out != 2) title("Situation COVID-19 in Germany",
       sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
-lm_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
-lm_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered))
+ln_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
+ln_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered))
 
 tc_0 <- 42
 tr_0 <- 35
 dt_r = 14
 
-lm_res_1 = lm(ln_x~t, lm_data_confirmed[15:35,])
-lm_res_2 = lm(ln_x~t, lm_data_confirmed[tc_0:len_ger_data,])
-lm_res_3 = lm(ln_x~t, lm_data_recovered[(14+dt_r):(35+dt_r),])
-lm_res_4 = lm(ln_x~t, lm_data_recovered[(tr_0+dt_r):len_ger_data,])
-lm_res_1
-lm_res_2
-lm_res_3
-lm_res_4
+ln_res_1 = lm(ln_x~t, ln_data_confirmed[15:35,])
+ln_res_2 = lm(ln_x~t, ln_data_confirmed[tc_0:len_ger_data,])
+ln_res_3 = lm(ln_x~t, ln_data_recovered[(14+dt_r):(35+dt_r),])
+ln_res_4 = lm(ln_x~t, ln_data_recovered[(tr_0+dt_r):len_ger_data,])
+ln_res_1
+ln_res_2
+ln_res_3
+ln_res_4
 
 
 if (plot_out == 2) png("Situation-2.png", width = 640, height = 480)
-plot(lm_data_confirmed,
+plot(ln_data_confirmed,
      type="p", 
      col = 1, 
      pch = 1,
      xlab=paste("Days after", rnames[1]), 
      ylab="ln( cases )")
-lines(lm_data_recovered , type="p", col = 2, pch = 2)
-lines(15:35,lm_res_1$fitted.values, col = 1, lty = 1)
-lines(tc_0:len_ger_data,lm_res_2$fitted.values, col = 1, lty = 2)
-lines((14+dt_r):(35+dt_r),lm_res_3$fitted.values, col = 2, lty = 1)
-lines((tr_0+dt_r):len_ger_data,lm_res_4$fitted.values, col = 2, lty = 2)
+lines(ln_data_recovered , type="p", col = 2, pch = 2)
+lines(15:35,ln_res_1$fitted.values, col = 1, lty = 1)
+lines(tc_0:len_ger_data,ln_res_2$fitted.values, col = 1, lty = 2)
+lines((14+dt_r):(35+dt_r),ln_res_3$fitted.values, col = 2, lty = 1)
+lines((tr_0+dt_r):len_ger_data,ln_res_4$fitted.values, col = 2, lty = 2)
 legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 1st phase", "Regression 2nd phase (used for modeling)"), 
        col=c(1,2,16,16),
        bg="white",
@@ -105,19 +105,19 @@ if (plot_out > 1) dev.off()
 
 # assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
 te = 5.1
-ti = 12
+ti = 14
 th = 8
-thi = 12
+thi = 14
 
 # assume k_raw from ln(x)-plot
-k_raw = lm_res_2$coefficients[2]
+k_raw = ln_res_2$coefficients[2]
 
 # example from Kentaro Iwata and Chisato Miyakoshi
 # https://www.preprints.org/manuscript/202002.0179/v1
 # https://gist.github.com/skoba/abc760104be559881ab7269372bb03ea#file-covid19-py
 # ti = 10
 # R0 = 3
-# k_raw = log(R0 + 1)/ti
+# k_raw = log(R0 + 1)/te
 
 # dx/dt = k * x
 # 1/x * dx = k * dt
@@ -126,10 +126,32 @@ k_raw = lm_res_2$coefficients[2]
 # x / x_0 = exp(k * t)
 # x = x_0 exp(k * t)
 # x_0 = 1
-# R0 = exp(k * ti) -1
+# R0 = exp(k * te) -1
 
-R0 = as.numeric(exp(k_raw * te) - 1)
-R0
+if (plot_out == 2) png("Situation-3.png", width = 640, height = 480)
+R0_plot <- data.frame(t = c(tc_0:(len_ger_data)), R0 = 0)
+for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]-1] <- exp(lm(ln_x~t, ln_data_confirmed[(i-10):i,])$coefficients[2] * te) - 1
+R0_plot$t <- R0_plot$t - R0_plot$t[1] 
+plot(R0_plot$t, R0_plot$R0, 
+     type = "p", 
+     ylim=c(0,6),
+     xlab=paste("Days after", rnames[40]),
+     ylab="Basic Reproductive Number R0")
+lines(lowess(R0_plot),lty=2,col=2)
+lines(c(0,length(R0_plot$R0)-1), c(1, 1),lty=3,col=3)
+legend("topright", legend <- c("Determined from a period of 10 days.", "Trend of Estimate", "Steady State"), 
+       col=c(1,2,3),
+       bg="white",
+       pch=c(1,-1,-1),
+       lwd=1,
+       lty=c(-1,2,3),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Situation COVID-19 in Germany",
+                         sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out > 1) dev.off()
+
 
 # assume 0.2% deaths from https://www.lungenaerzte-im-netz.de/krankheiten/covid-19/symptome-krankheitsverlauf/
 kd_1 <- 0.002

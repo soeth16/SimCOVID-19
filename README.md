@@ -71,9 +71,17 @@ du[6] = + k * h(p, t - te - th - thi)[1] / x_max * h(p, t - te - th - thi)[2] * 
 
 ![Situation](Situation-1.png)
 
-The growths rate is determine by logarithmic fitting of the confirmed cases in the last 10 days:
+The growths rate is determined by logarithmic fitting of the confirmed cases in the last 10 days:
 
 ![Situation - logarithmic scale](Situation-2.png)
+
+Basic Reproductive Number R0 has been determined from growths rate and median incubation time:
+
+```R
+R0 = exp(k * te) -1
+```
+
+![Situation - Basic Reproductive Number](Situation-3.png)
 
 ### Model vs Situation
 
@@ -87,4 +95,4 @@ The growths rate is determine by logarithmic fitting of the confirmed cases in t
 
 ## References
 
-**TODO !!!**
+* <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Steckbrief.html>
