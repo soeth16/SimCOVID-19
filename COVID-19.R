@@ -6,7 +6,7 @@ setwd("~/SimCOVID-19")
 # grapfical: 0
 # pdf: 1
 # png: 2
-plot_out <- 1
+plot_out <- 0
 
 
 library(JuliaCall)
@@ -57,7 +57,7 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases"),
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation COVID-19 in Germany",
-      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 ln_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
@@ -99,13 +99,13 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation COVID-19 in Germany",
-      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
 # assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
 te = 5.1
-ti = 14
+ti = 12
 th = 8
 thi = 14
 
@@ -149,7 +149,7 @@ legend("topright", legend <- c("Determined from a period of 10 days.", "Trend of
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation COVID-19 in Germany",
-                         sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
@@ -267,7 +267,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation vs Model COVID-19 in Germany",
-      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
@@ -286,7 +286,7 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation vs Model COVID-19 in Germany",
-      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 t_0 <- 55
@@ -327,7 +327,7 @@ legend("topright", legend <- c("Susceptible (noninfected)", "Exposed (incubation
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 2) png("Forecast-2.png", width = 640, height = 480)
@@ -353,7 +353,7 @@ legend("topright", legend <- c("Susceptible (noninfected)", "Exposed (incubation
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 
@@ -380,7 +380,7 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"),
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 2) png("Forecast-ARDS-2.png", width = 640, height = 480)
@@ -401,7 +401,7 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"),
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-      sub="Created by Sören Thiering 03/18/2020. Email: soeren.thiering@hs-anhalt.de")
+      sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
 if (plot_out == 1) dev.off() 
