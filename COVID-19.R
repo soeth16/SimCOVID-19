@@ -6,7 +6,7 @@ setwd("~/SimCOVID-19")
 # grapfical: 0
 # pdf: 1
 # png: 2
-plot_out <- 0
+plot_out <- 2
 
 
 library(JuliaCall)
