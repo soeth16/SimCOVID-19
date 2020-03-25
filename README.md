@@ -93,6 +93,10 @@ R0 = exp(k * te) -1
 
 ![Forecast ARDS](Forecast-ARDS-2.png)
 
+![Forecast ARDS](Forecast-ARDS-3.png)
+
+![Forecast ARDS](Forecast-ARDS-4.png)
+
 ## References
 
 * <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Steckbrief.html>
