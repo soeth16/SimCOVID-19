@@ -29,9 +29,9 @@ if (plot_out == 1) pdf("Plots.pdf")
 # git pull
 #
 library(readr)
-csse_covid_19_time_series_confirmed <- read_csv("COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
-csse_covid_19_time_series_recovered <- read_csv("COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv")
-csse_covid_19_time_series_deaths    <- read_csv("COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv")
+csse_covid_19_time_series_confirmed <- read_csv("COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+csse_covid_19_time_series_recovered <- read_csv("COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+csse_covid_19_time_series_deaths    <- read_csv("COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
 
 ger_data_confirmed <- t(subset(csse_covid_19_time_series_confirmed, `Country/Region`=="Germany", select =-c(1:4)))
 ger_data_recovered <- t(subset(csse_covid_19_time_series_recovered, `Country/Region`=="Germany", select =-c(1:4)))
@@ -39,7 +39,7 @@ ger_data_deaths    <- t(subset(csse_covid_19_time_series_deaths,    `Country/Reg
 
 rnames <- rownames(ger_data_confirmed)
 len_ger_data <- length(ger_data_confirmed)
-
+len_ger_data <- 63
 #View(data.frame(day=1:len_ger_data, confirmed=ger_data_confirmed, recovered=ger_data_recovered))
 
 
@@ -67,8 +67,8 @@ if (plot_out != 2) title("Situation COVID-19 in Germany",
                          sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
 
-ln_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed))
-ln_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered))
+ln_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed[1:len_ger_data]))
+ln_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered[1:len_ger_data]))
 
 tc_0 <- 42
 tc_max <- 60
@@ -184,12 +184,12 @@ kd_1 <- 0.002
 
 # assume Hubei / China
 kd_2 <- as.numeric(
-  subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,])) 
+  subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,1:len_ger_data])) 
   /
     (
-      subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,]))
+      subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,1:len_ger_data]))
       +
-        subset(csse_covid_19_time_series_recovered, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,]))
+        subset(csse_covid_19_time_series_recovered, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,1:len_ger_data]))
     )
 )
 
@@ -274,6 +274,8 @@ h_0 <- function(p, t)
 
 
 
+
+
 t_0 <- 40
 
 I <- ger_data_confirmed[t_0] - ger_data_recovered[t_0] - ger_data_deaths[t_0]
@@ -327,6 +329,8 @@ legend("topleft", legend <- c("Confirmed cases", "Modeled cases"),
 if (plot_out != 2) title("Situation vs Model COVID-19 in Germany",
                          sub="Created by Sören Thiering 03/19/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
+
+
 
 
 
