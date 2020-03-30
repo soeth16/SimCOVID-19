@@ -87,7 +87,7 @@ R0 = exp(k * te) -1
 
 ![Model vs Situation](Model_vs_Situation-1.png)
 
-### Forecast (100 Days)
+### Forecast (250 Days)
 
 ![Forecast as Fraction](Forecast-2.png)
 

@@ -387,8 +387,8 @@ t = 0:1000/1000*(250)
 
 
 sol = diffeqr::dde.solve('f', u_0, h_0, p=p, tspan, saveat = t, constant_lags=constant_lags, abstol = 1e-8, reltol = 1e-8)
-
 if (plot_out == 2) png("Forecast-1.png", width = 640, height = 480)
+
 plot(sol$t,sol$u[,1],
      type="l", 
      xlab=paste("Days after", rnames[t_0]), 
@@ -412,8 +412,6 @@ legend("topright", legend <- c("Susceptible (noninfected)", "Exposed (incubation
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
                          sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
-
-
 
 
 
@@ -451,12 +449,15 @@ max(sol$u[,4])/nh_max
 
 
 if (plot_out == 2) png("Forecast-ARDS-1.png", width = 640, height = 480)
+
+par(mar=c(5,6,6,5)+0.1)
+
 plot(sol$t, sol$u[,4], 
      type="l",
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases", 
      ylim=c(0,max(sol$u[,6])), 
-     xlim=c(0,100), 
+     xlim=c(0,250), 
      lty=1, col=1)
 lines(sol$t, sol$u[,6], type="l", lty=2, col=2)
 par(new=T)
@@ -465,11 +466,11 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      xlab="", 
      ylab="",
      axes = F,
-     xlim=c(0,100), 
+     xlim=c(0,250), 
      lty=3, col=3)
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
-legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"), 
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
        col=c(1:6,16),
        bty="n",
        lwd=1,
@@ -482,12 +483,15 @@ if (plot_out != 2) title("Forecast COVID-19 in Germany",
 if (plot_out > 1) dev.off()
 
 if (plot_out == 2) png("Forecast-ARDS-2.png", width = 640, height = 480)
+
+par(mar=c(5,6,6,5)+0.1)
+
 plot(sol$t, sol$u[,4]/x_max*100, 
      type="l",
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases [%]", 
      ylim=c(0,max(sol$u[,6])/x_max*100), 
-     xlim=c(0,100), 
+     xlim=c(0,250), 
      lty=1, col=1)
 lines(sol$t, sol$u[,6]/x_max*100, type="l", lty=2, col=2)
 par(new=T)
@@ -496,11 +500,11 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      xlab="", 
      ylab="",
      axes = F,
-     xlim=c(0,100), 
+     xlim=c(0,250), 
      lty=3, col=3)
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
-legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"), 
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
        col=c(1:6,16),
        bty="n",
        lwd=1,
@@ -511,7 +515,6 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"),
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
                          sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
 if (plot_out > 1) dev.off()
-
 
 
 
@@ -569,8 +572,6 @@ if (plot_out > 1) dev.off()
 
 
 
-
-
 if (plot_out == 2) png("Forecast-2-old.png", width = 640, height = 480)
 plot(sol$t,sol$u[,1]/x_max*100,
      type="l", 
@@ -604,12 +605,15 @@ max(sol$u[,4])/nh_max
 
 
 if (plot_out == 2) png("Forecast-ARDS-1-old.png", width = 640, height = 480)
+
+par(mar=c(5,6,6,5)+0.1)
+
 plot(sol$t, sol$u[,4], 
      type="l",
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases", 
      ylim=c(0,max(sol$u[,6])), 
-     xlim=c(0,100), 
+     xlim=c(0,250), 
      lty=1, col=1)
 lines(sol$t, sol$u[,6], type="l", lty=2, col=2)
 par(new=T)
@@ -618,11 +622,11 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      xlab="", 
      ylab="",
      axes = F,
-     xlim=c(0,100), 
+     xlim=c(0,250), 
      lty=3, col=3)
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
-legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"), 
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
        col=c(1:6,16),
        bty="n",
        lwd=1,
@@ -635,12 +639,15 @@ if (plot_out != 2) title("Forecast COVID-19 in Germany",
 if (plot_out > 1) dev.off()
 
 if (plot_out == 2) png("Forecast-ARDS-2-old.png", width = 640, height = 480)
+
+par(mar=c(5,6,6,5)+0.1)
+
 plot(sol$t, sol$u[,4]/x_max*100, 
      type="l",
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases [%]", 
      ylim=c(0,max(sol$u[,6])/x_max*100), 
-     xlim=c(0,100), 
+     xlim=c(0,250), 
      lty=1, col=1)
 lines(sol$t, sol$u[,6]/x_max*100, type="l", lty=2, col=2)
 par(new=T)
@@ -649,11 +656,11 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      xlab="", 
      ylab="",
      axes = F,
-     xlim=c(0,100), 
+     xlim=c(0,250), 
      lty=3, col=3)
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
-legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths"), 
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
        col=c(1:6,16),
        bty="n",
        lwd=1,
@@ -708,7 +715,6 @@ t = 0:1000/1000*(250)
 rbcol = rainbow(11)
 
 if (plot_out == 2) png("Forecast-ARDS-3.png", width = 640, height = 480)
-
 
 par(mar=c(5,6,6,5)+0.1)
 
