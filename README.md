@@ -93,6 +93,14 @@ R0 = exp(k * te) -1
 
 ![Forecast ARDS](Forecast-ARDS-2.png)
 
+### Forecast bevore 03/23/2020
+
+![Forecast as Fraction](Forecast-2-old.png)
+
+![Forecast ARDS](Forecast-ARDS-2-old.png)
+
+### Variant calculation
+
 ![Forecast ARDS](Forecast-ARDS-3.png)
 
 ![Forecast ARDS](Forecast-ARDS-4.png)
