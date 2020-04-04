@@ -255,15 +255,24 @@ JuliaCall::julia_assign("lags", c(1,1,1,1,1,1,1))
 JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
 
 data <- array(dim=c(1,length(t),100))
-for ( i in 1:1)
+for (i in 1:1)
   for (j in 1:length(t))
     data[i,j,] <- rnorm(100,data_df[j,i],1000)
-
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
 JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:1, j in 1:length(t)]")
-
 JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),LogLikeLoss(t,distributions),maxiters=10000,verbose=false); nothing")
+
+# L2Loss
+#data <- array(dim=c(1,length(t),1))
+#for ( i in 1:1)
+#  for (j in 1:length(t))
+#    data[i,j,] <- data_df[j,i]
+#JuliaCall::julia_assign("t", t-t_0)
+#JuliaCall::julia_assign("data", data)
+#JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),L2Loss(t,data), maxiters=10000,verbose=false); nothing")
+
+
 JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(13,15),(0.1,0.25)]")
 JuliaCall::julia_eval("res = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3)")
 

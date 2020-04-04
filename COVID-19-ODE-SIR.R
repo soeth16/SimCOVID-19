@@ -187,24 +187,40 @@ JuliaCall::julia_assign("p", c(k,tk_2,k2,ti))
 JuliaCall::julia_assign("saveat", c(0:1000/1000*250))
 JuliaCall::julia_eval("prob = ODEProblem(f,u0,tspan,p)")
 
-data <- array(dim=c(4,length(t),100))
+# LogLikeLoss
+#data <- array(dim=c(4,length(t),100))
+#for (j in 1:length(t))
+#{
+#  data[1,j,] <- rnorm(100,data_df[j,1],100)
+#  data[2,j,] <- rnorm(100,data_df[j,2],100)
+#  data[3,j,] <- rnorm(100,data_df[j,3],100)
+#  data[4,j,] <- rnorm(100,data_df[j,4],100)
+#}
+#JuliaCall::julia_assign("t", t-t_0)
+#JuliaCall::julia_assign("data", data)
+#JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:4, j in 1:length(t)]")
+#JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),LogLikeLoss(t,distributions),maxiters=10000,verbose=false); nothing")
+
+# L2Loss
+data <- array(dim=c(4,length(t),1))
 for (j in 1:length(t))
 {
-  data[1,j,] <- rnorm(100,data_df[j,1],100)
-  data[2,j,] <- rnorm(100,data_df[j,2],100)
-  data[3,j,] <- rnorm(100,data_df[j,3],100)
-  data[4,j,] <- rnorm(100,data_df[j,4],100)
+  data[1,j,] <- data_df[j,1]
+  data[2,j,] <- data_df[j,2]
+  data[3,j,] <- data_df[j,3]
+  data[4,j,] <- data_df[j,4]
 }
-
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
-JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:4, j in 1:length(t)]")
+JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),L2Loss(t,data), maxiters=10000,verbose=false); nothing")
 
-JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),LogLikeLoss(t,distributions),maxiters=10000,verbose=false); nothing")
 JuliaCall::julia_eval("bound1 = Tuple{Float64, Float64}[(0.1, 2),(15, 25),(0.1, 2),(14, 50)]")
 JuliaCall::julia_eval("res = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e4)")
-
 p2 <- JuliaCall::julia_eval("p = best_candidate(res)")
+
+#JuliaCall::julia_eval("res = Optim.optimize(obj, [0.3,20,0.15,14], Optim.BFGS())")
+#p2 <- JuliaCall::julia_eval("p = res.minimizer")
+
 JuliaCall::julia_eval("prob = ODEProblem(f,u0,tspan,p)")
 JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-9, maxiters = 1000000, saveat=saveat); nothing")
 sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
