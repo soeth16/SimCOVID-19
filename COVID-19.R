@@ -18,6 +18,8 @@ JuliaCall::julia_install_package_if_needed("Distributions")
 JuliaCall::julia_library("Distributions")
 JuliaCall::julia_install_package_if_needed("BlackBoxOptim")
 JuliaCall::julia_library("BlackBoxOptim")
+JuliaCall::julia_library("Distributed")
+JuliaCall::julia_eval("addprocs(10)")
 
 
 #####################################################################################
@@ -171,9 +173,11 @@ f = JuliaCall::julia_eval("function f(du, u, h, p, t)
     # tk_2  = p[2]  # time of change from k to k2
     # k2    = p[3]  # k after change
     du[8] = 0
-    if (t >= p[2]) 
+    if (t >= p[4]) 
+      u[8] = p[5]
+    elseif (t >= p[2]) 
       u[8] = p[3]
-    else
+    elseif (t < 1) 
       u[8] = p[1]
     end
     
@@ -207,6 +211,10 @@ f = JuliaCall::julia_eval("function f(du, u, h, p, t)
     
   end")
 
+JuliaCall::julia_assign("lags", c(te, te + ti, te + th,  te + th + thi))
+
+
+JuliaCall::julia_eval("cb = ContinuousCallback((u,t,integrator)->(t-6),(integrator)->(integrator.u[8] = 0.05))")
 
 
 # dx/dt = k * x
@@ -249,19 +257,22 @@ data_df <- data.frame(C[t], D[t], R[t])
 
 JuliaCall::julia_assign("u0", c(C[t_0], D[t_0], R[t_0], H[t_0], I[t_0], E[t_0], S[t_0], k))
 JuliaCall::julia_assign("tspan", c(0,250))
-JuliaCall::julia_assign("p", c(k, tk_2, k))
+JuliaCall::julia_assign("p", c(k, tk_2, k2, tk_2+7, k2))
 JuliaCall::julia_assign("saveat", c(0:1000/1000*250))
-JuliaCall::julia_assign("lags", c(1,1,1,1,1,1,1))
+#JuliaCall::julia_assign("lags", lags)
 JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
 
-data <- array(dim=c(1,length(t),100))
-for (i in 1:1)
-  for (j in 1:length(t))
-    data[i,j,] <- rnorm(100,data_df[j,i],1000)
+data <- array(dim=c(3,length(t),1000))
+for (j in 1:length(t))
+{
+  data[1,j,] <- rnorm(1000,data_df[j,1],10)
+  data[2,j,] <- rnorm(1000,data_df[j,2],100+data_df[j,2]/1e5)
+  data[3,j,] <- rnorm(1000,data_df[j,3],100+data_df[j,3]/1e5)
+}
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
-JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:1, j in 1:length(t)]")
-JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),LogLikeLoss(t,distributions),maxiters=10000,verbose=false); nothing")
+JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:3, j in 1:length(t)]")
+JuliaCall::julia_eval("obj = build_loss_objective(prob,MethodOfSteps(Rodas5()),LogLikeLoss(t,distributions),maxiters=10000,verbose=false); nothing")
 
 # L2Loss
 #data <- array(dim=c(1,length(t),1))
@@ -273,11 +284,13 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),LogLikeLoss(t,dis
 #JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),L2Loss(t,data), maxiters=10000,verbose=false); nothing")
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(13,15),(0.1,0.25)]")
-JuliaCall::julia_eval("res = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3)")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(10,15),(0.2,0.3),(20,25),(0.15,0.25)]")
+JuliaCall::julia_eval("res = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e4)")
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res)")
 
+rnames[p2[2]+t_0]
+rnames[p2[4]+t_0]
 
 #####################################################################################
 #
@@ -300,7 +313,7 @@ for (plot_out in c(2:0)) {
 
 JuliaCall::julia_assign("p", p2)
 JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
+JuliaCall::julia_eval("sol = solve(prob, MethodOfSteps(Rodas5()), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
 sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   
@@ -383,6 +396,9 @@ lines(tc_0:tc_max,ln_res_2a$fitted.values, col = 1, lty = 2)
 lines(tc2_0:tc2_max,ln_res_3a$fitted.values, col = 1, lty = 3)
 lines((14+dt_r):(35+dt_r),ln_res_1b$fitted.values, col = 2, lty = 1)
 lines((tr_0+dt_r):tr_max,ln_res_2b$fitted.values, col = 2, lty = 2)
+for (i in c(0:25)) 
+  lines(c(i*7-22,i*7-22), (c(-10, 25)), type="l", lty = 5, col="light gray" )
+
 legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 1st phase", "Regression 2nd phase (used for modeling)", "Regression 3nd phase (used for modeling)"), 
        col=c(1,2,16,16),
        bty="n",
@@ -408,6 +424,8 @@ plot(R0_plot$t, R0_plot$R0,
      ylab="Basic Reproductive Number R0")
 lines(lowess(R0_plot),lty=2,col=2)
 lines(c(0,length(R0_plot$R0)-1), c(1, 1),lty=3,col=3)
+for (i in c(0:25)) 
+  lines(c(i*7-22-tc_0,i*7-22-tc_0), (c(-10, 25)), type="l", lty = 5, col="light gray" )
 legend("topright", legend <- c("Determined from a period of 3 days.", "Trend of Estimate", "Steady State"), 
        col=c(1,2,3),
        bty="n",
@@ -442,6 +460,8 @@ lines(sol$t, sol$u[,4], lty=4, col=4)
 lines(sol$t, sol$u[,3], lty=5, col=5)
 lines(sol$t, sol$u[,2], lty=6, col=6)
 lines(sol$t, sol$u[,1], lty=7, col=16)
+for (i in c(0:100)) 
+  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
 legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"),       col=c(1:6,16),
        bty="n",
        lwd=1,
@@ -468,6 +488,8 @@ lines(sol$t, sol$u[,4]/x_max*100, lty=4, col=4)
 lines(sol$t, sol$u[,3]/x_max*100, lty=5, col=5)
 lines(sol$t, sol$u[,2]/x_max*100, lty=6, col=6)
 lines(sol$t, sol$u[,1]/x_max*100, lty=7, col=16)
+for (i in c(0:100)) 
+  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
 legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"), 
        col=c(1:6,16),
        bty="n",
@@ -507,6 +529,8 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      axes = F,
      xlim=c(0,250), 
      lty=3, col=3)
+for (i in c(0:100)) 
+  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
@@ -541,6 +565,8 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      axes = F,
      xlim=c(0,250), 
      lty=3, col=3)
+for (i in c(0:100)) 
+  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
@@ -564,9 +590,9 @@ if (plot_out > 1) dev.off()
 #   
 #####################################################################################
 
-JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1]))
+JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[4], p2[1]))
 JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
+JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
 sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
 
 
@@ -584,6 +610,8 @@ lines(sol$t, sol$u[,4], lty=4, col=4)
 lines(sol$t, sol$u[,3], lty=5, col=5)
 lines(sol$t, sol$u[,2], lty=6, col=6)
 lines(sol$t, sol$u[,1], lty=7, col=16)
+for (i in c(0:100)) 
+  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
 legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"),       col=c(1:6,16),
        bty="n",
        lwd=1,
@@ -611,6 +639,8 @@ lines(sol$t, sol$u[,4]/x_max*100, lty=4, col=4)
 lines(sol$t, sol$u[,3]/x_max*100, lty=5, col=5)
 lines(sol$t, sol$u[,2]/x_max*100, lty=6, col=6)
 lines(sol$t, sol$u[,1]/x_max*100, lty=7, col=16)
+for (i in c(0:100)) 
+  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
 legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"), 
        col=c(1:6,16),
        bty="n",
@@ -649,6 +679,8 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      axes = F,
      xlim=c(0,250), 
      lty=3, col=3)
+for (i in c(0:100)) 
+  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
@@ -683,6 +715,8 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      axes = F,
      xlim=c(0,250), 
      lty=3, col=3)
+for (i in c(0:100)) 
+  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
@@ -704,9 +738,9 @@ if (plot_out > 1) dev.off()
 #   
 #####################################################################################
 
-JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1]))
+JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[3], p2[1]))
 JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
+JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
 sol1 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
 
 rbcol = rainbow(11)
@@ -736,9 +770,9 @@ for (i in c(0:10))
   f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
   k2 <- uniroot(f_k2 , c(0.01, 1))$root
   
-  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2))
+  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2, tk_2+1, k2))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
   sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   par(new=T)
@@ -804,9 +838,9 @@ for (i in c(0:10))
   f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
   k2 <- uniroot(f_k2 , c(0.01, 1))$root
   
-  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2))
+  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2, tk_2+1, k2))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
   sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   par(new=T)
@@ -876,9 +910,9 @@ for (i in c(0:10))
   f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
   k2 <- uniroot(f_k2 , c(0.01, 1))$root
   
-  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2))
+  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2, tk_2+1, k2))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
   sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   par(new=T)
