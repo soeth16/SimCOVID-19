@@ -9,17 +9,22 @@ setwd("..")
 
 library(JuliaCall)
 JuliaCall::julia_install_package_if_needed("DifferentialEquations")
-JuliaCall::julia_library("DifferentialEquations")
 JuliaCall::julia_install_package_if_needed("DiffEqParamEstim")
-JuliaCall::julia_library("DiffEqParamEstim")
 JuliaCall::julia_install_package_if_needed("Optim")
-JuliaCall::julia_library("Optim")
 JuliaCall::julia_install_package_if_needed("Distributions")
-JuliaCall::julia_library("Distributions")
 JuliaCall::julia_install_package_if_needed("BlackBoxOptim")
-JuliaCall::julia_library("BlackBoxOptim")
 JuliaCall::julia_library("Distributed")
-JuliaCall::julia_eval("addprocs(10)")
+JuliaCall::julia_eval("addprocs(8)")
+JuliaCall::julia_library("DifferentialEquations")
+JuliaCall::julia_library("DiffEqParamEstim")
+JuliaCall::julia_library("Optim")
+JuliaCall::julia_library("Distributions")
+JuliaCall::julia_library("BlackBoxOptim")
+JuliaCall::julia_eval("@everywhere using DifferentialEquations")
+JuliaCall::julia_eval("@everywhere using DiffEqParamEstim")
+JuliaCall::julia_eval("@everywhere using Optim")
+JuliaCall::julia_eval("@everywhere using Distributions")
+JuliaCall::julia_eval("@everywhere using BlackBoxOptim")
 
 
 #####################################################################################
@@ -82,9 +87,11 @@ ln_res_2b
 
 # assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
 te = 5.1
-ti = 14
+ti = 12
 th = 8
 thi = 14
+thd = 2
+
 
 # assume k_raw from ln(x)-plot
 k_raw = ln_res_2a$coefficients[2]
@@ -99,7 +106,7 @@ k_raw2 = ln_res_3a$coefficients[2]
 # x2' = 
 
 f_k <- function(k) k *(1-exp(-k * te)) - k_raw
-k <- uniroot(f_k , c(0.01, 1))$root
+k1 <- uniroot(f_k , c(0.01, 1))$root
 f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - k_raw2
 k2 <- uniroot(f_k2 , c(0.01, 1))$root
 
@@ -126,19 +133,22 @@ R0 = exp(k_raw*0.7 * te) -1
 R0  
 log(1+1)/te
 
-# assume 0.2% deaths from https://www.lungenaerzte-im-netz.de/krankheiten/covid-19/symptome-krankheitsverlauf/
-kd_1 <- 0.002
+# assume median from 40:80 in germany (good)
+kd_1 <- as.numeric(quantile(
+  ger_data_deaths[50:60]/(ger_data_confirmed[40:50]), 
+  probs = 0.1
+))
 
-# assume Hubei / China
-kd_2 <- as.numeric(
-  subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,1:len_ger_data])) 
+# assume Hubei / China (bad)
+kd_2 <- as.numeric(quantile(
+  subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = c(20:80)) 
   /
     (
-      subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,1:len_ger_data]))
-      +
-        subset(csse_covid_19_time_series_recovered, `Province/State` == "Hubei", select = length(csse_covid_19_time_series_confirmed[1,1:len_ger_data]))
-    )
-)
+      subset(csse_covid_19_time_series_confirmed, `Province/State` == "Hubei", select = c(10:70))
+    ),
+  probs = 0.9
+))
+
 
 # assume k_bed from max kd_2 (Hubei / China)
 kh <- kd_2
@@ -156,62 +166,125 @@ x_max <- 83.019213e6
 #####################################################################################
 #        1  2     3
 # p <- c(k, tk_2, k2)
+# 
+# k     = p[1]  # 1st growth rate
+# tk_2  = p[2]  # time of change to 2nd growth rate
+# k2    = p[3]  # 2nd growth rate
+# tk_3  = p[2]  # time of change to 3rd  growth rate
+# k3    = p[3]  # 3rd growth rate
+
+
 
 JuliaCall::julia_assign("x_max",x_max) 
 JuliaCall::julia_assign("te", te) 
 JuliaCall::julia_assign("ti", ti) 
 JuliaCall::julia_assign("th", th)
 JuliaCall::julia_assign("thi", thi)
+JuliaCall::julia_assign("thd", thd)
 JuliaCall::julia_assign("nh_max", nh_max)
 JuliaCall::julia_assign("kh", kh)
 JuliaCall::julia_assign("kd_1", kd_1)
 JuliaCall::julia_assign("kd_2", kd_2)
 
-f = JuliaCall::julia_eval("function f(du, u, h, p, t)
-    # parameter
-    # k     = p[1]  # growth rate
-    # tk_2  = p[2]  # time of change from k to k2
-    # k2    = p[3]  # k after change
-    du[8] = 0
-    if (t >= p[4]) 
-      u[8] = p[5]
-    elseif (t >= p[2]) 
-      u[8] = p[3]
-    elseif (t < 1) 
-      u[8] = p[1]
+JuliaCall::julia_eval("@everywhere x_max = $x_max")
+JuliaCall::julia_eval("@everywhere te = $te")
+JuliaCall::julia_eval("@everywhere ti = $ti") 
+JuliaCall::julia_eval("@everywhere th = $th")
+JuliaCall::julia_eval("@everywhere thi = $thi")
+JuliaCall::julia_eval("@everywhere thd = $thd")
+JuliaCall::julia_eval("@everywhere nh_max = $nh_max")
+JuliaCall::julia_eval("@everywhere kh = $kh")
+JuliaCall::julia_eval("@everywhere kd_1 = $kd_1")
+JuliaCall::julia_eval("@everywhere kd_2 = $kd_2")
+
+k = JuliaCall::julia_eval("@everywhere function k(p, t)
+    if (t >= p[6]) 
+      p[7]
+    elseif (t >= p[4] && t < p[6]) 
+      p[5]
+    #if (t >= p[4]) 
+    #  p[5]
+    elseif (t >= p[2] && t < p[4]) 
+      p[3]
+    elseif (t < p[2]) 
+      p[1]
     end
+  end")
+
+k <- function(p, t) {
+  tmp <- 0
+  for (tt in 1:length(t))
+  {
+    if (t[tt] >= p[6]) tmp[tt] <- p[7]
+    else if (t[tt] >= p[4] && t[tt] < p[6]) tmp[tt] <- p[5]
+    else if (t[tt] >= p[2] && t[tt] < p[4]) tmp[tt] <- p[3]
+    else if (t[tt] < p[2]) tmp[tt] <- p[1]
+  }
+  return (tmp)
+}
+
+
+kd = JuliaCall::julia_eval("@everywhere function kd(u, p)
+    # kd for distributed hospital usage
+    #if (u[4] > nh_max) 
+    #  kd_1 * nh_max / u[4] + kd_2 * (u[4] - nh_max) / u[4]
+    #else 
+    #  kd_1
+    #end
     
-    # kd
-    if (u[4] > nh_max) 
-      kd = kd_1 * nh_max / u[4] + kd_2 * (u[4] - nh_max) / u[4]
-    else 
-      kd = kd_1
+    # kd for hotspots without distrubution
+    if (u[4] / nh_max < 1) 
+      kd_1 * (1 - u[4] / nh_max) + kd_2 * u[4] / nh_max
+    else
+      kd_2
     end
-    
+  end")
+
+f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
+
     # Susceptibles
-    du[7] = - u[8] * u[7] / x_max * u[6]
+    du[7] = (
+      - k(p, t) * u[7] / x_max * u[6]
+    )
     
     # Exposed / Incubating
-    du[6] = + u[8] * u[7] / x_max * u[6] - h(p, t - te)[8] * h(p, t - te)[7] / x_max * h(p, t - te)[6] 
+    du[6] = (
+      + k(p, t) * u[7] / x_max * u[6] 
+      - k(p, t - te) * h(p, t - te)[7] / x_max * h(p, t - te)[6] 
+    )
     
     # Infected
-    du[5] = + h(p, t - te)[8] * h(p, t - te)[7] / x_max * h(p, t - te)[6] - h(p, t - te - ti)[8] * h(p, t - te - ti)[7] / x_max * h(p, t - te - ti)[6] * (1-kh)  - h(p, t - te - th)[8] * h(p, t - te - th)[7] / x_max * h(p, t - te - th)[6] * kh
+    du[5] = (
+      + k(p, t - te) * h(p, t - te)[7] / x_max * h(p, t - te)[6] 
+      - k(p, t - te - ti) * h(p, t - te - ti)[7] / x_max * h(p, t - te - ti)[6] * (1-kh)
+      - k(p, t - te - th) * h(p, t - te - th)[7] / x_max * h(p, t - te - th)[6] * kh
+    )
 
     # Hostspitalisation 
-    du[4] = + h(p, t - te - th)[8] * h(p, t - te - th)[7] / x_max * h(p, t - te - th)[6] * kh - h(p, t - te - th)[8] * h(p, t - te - th - thi)[7] / x_max * h(p, t - te - th - thi)[6] * kh
+    du[4] = (
+      + k(p, t - te - th) * h(p, t - te - th)[7] / x_max * h(p, t - te - th)[6] * kh 
+      - k(p, t - te - th - thi) * h(p, t - te - th - thi)[7] / x_max * h(p, t - te - th - thi)[6] * (kh - kd(h(p, t - thi + thd), p))
+      - k(p, t - te - th - thd) * h(p, t - te - th - thd)[7] / x_max * h(p, t - te - th - thd)[6] * kd(u, p)
+    )
+    #h(p, t - thi + thd)
     
     # Recovered
-    du[3] = + h(p, t - te - ti)[8] * h(p, t - te - ti)[7] / x_max * h(p, t - te - ti)[6] * (1-kh) + h(p, t - te - th - thi)[8] * h(p, t - te - th - thi)[7] / x_max * h(p, t - te - th - thi)[6] * (kh - kd)
+    du[3] = ( 
+      + k(p, t - te - ti) * h(p, t - te - ti)[7] / x_max * h(p, t - te - ti)[6] * (1-kh) 
+      + k(p, t - te - th - thi) * h(p, t - te - th - thi)[7] / x_max * h(p, t - te - th - thi)[6] * (kh - kd(h(p, t - thi + thd), p))
+    )
     
     # Deaths
-    du[2] = + h(p, t - te - th - thi)[8] * h(p, t - te - th - thi)[7] / x_max * h(p, t - te - th - thi)[6] * kd
-  
+    du[2] = ( 
+      + k(p, t - te - th - thd) * h(p, t - te - th - thd)[7] / x_max * h(p, t - te - th - thd)[6] * kd(u, p)
+    )
+    
     # Confirmed
     du[1] = du[5] + du[4] + du[3] + du[2]
     
   end")
 
-JuliaCall::julia_assign("lags", c(te, te + ti, te + th,  te + th + thi))
+JuliaCall::julia_assign("lags", c(te, te + ti, te + th,  te + th + thi, te + th + thd, thi - thd))
 
 
 JuliaCall::julia_eval("cb = ContinuousCallback((u,t,integrator)->(t-6),(integrator)->(integrator.u[8] = 0.05))")
@@ -225,10 +298,8 @@ JuliaCall::julia_eval("cb = ContinuousCallback((u,t,integrator)->(t-6),(integrat
 # x = x_0 exp(k * t)
 # x_0 = 1
 
-h = JuliaCall::julia_eval("function h(p, t)
+h = JuliaCall::julia_eval("@everywhere function h(p, t)
     u = u0 * exp(p[1] * t)
-    u[8] = p[1]
-    u
   end")
 
 
@@ -246,7 +317,7 @@ tk_2 <- tc_max - t_0 - te
 t = c(t_0:len_ger_data)
 C = ger_data_confirmed
 I <- ger_data_confirmed - ger_data_recovered - ger_data_deaths
-E <- I * k_raw/(k * exp(-k*te))
+E <- I * k_raw/(k1 * exp(-k1*te))
 I <- I * 0.95
 H <- I * 0.05
 R <- ger_data_recovered
@@ -255,40 +326,39 @@ S <-x_max - I - E - H - R - D
 
 data_df <- data.frame(C[t], D[t], R[t])
 
-JuliaCall::julia_assign("u0", c(C[t_0], D[t_0], R[t_0], H[t_0], I[t_0], E[t_0], S[t_0], k))
+JuliaCall::julia_assign("u0", c(C[t_0], D[t_0], R[t_0], H[t_0], I[t_0], E[t_0], S[t_0]))
 JuliaCall::julia_assign("tspan", c(0,250))
-JuliaCall::julia_assign("p", c(k, tk_2, k2, tk_2+7, k2))
+JuliaCall::julia_assign("p", c(k1, tk_2, k2, tk_2+7, k2,1000,k1))
 JuliaCall::julia_assign("saveat", c(0:1000/1000*250))
-#JuliaCall::julia_assign("lags", lags)
-JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
+JuliaCall::julia_eval("@everywhere u0 = $u0");
+JuliaCall::julia_eval("@everywhere tspan = $tspan");
+JuliaCall::julia_eval("@everywhere p = $p");
+JuliaCall::julia_eval("@everywhere saveat = $saveat");
+JuliaCall::julia_eval("@everywhere lags = $lags");
+JuliaCall::julia_eval("@everywhere prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
 
 data <- array(dim=c(3,length(t),1000))
 for (j in 1:length(t))
 {
-  data[1,j,] <- rnorm(1000,data_df[j,1],10)
-  data[2,j,] <- rnorm(1000,data_df[j,2],100+data_df[j,2]/1e5)
-  data[3,j,] <- rnorm(1000,data_df[j,3],100+data_df[j,3]/1e5)
+  data[1,j,] <- rnorm(1000,data_df[j,1],max(data_df[,1])*0.01)
+  data[2,j,] <- rnorm(1000,data_df[j,2],(max(data_df[,2])+data_df[j,2])*0.01)
+  data[3,j,] <- rnorm(1000,data_df[j,3],(max(data_df[,3])+data_df[j,3])*0.01)
 }
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
-JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:3, j in 1:length(t)]")
-JuliaCall::julia_eval("obj = build_loss_objective(prob,MethodOfSteps(Rodas5()),LogLikeLoss(t,distributions),maxiters=10000,verbose=false); nothing")
+JuliaCall::julia_eval("@everywhere t = $t")
+JuliaCall::julia_eval("@everywhere data = $data")
+JuliaCall::julia_eval("@everywhere distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:3, j in 1:length(t)]")
+JuliaCall::julia_eval("@everywhere obj = build_loss_objective(prob, Rodas5(), reltol=1e-6, abstol=1e-9, maxiters = 10000, LogLikeLoss(t,distributions), verbose=true); nothing")
 
-# L2Loss
-#data <- array(dim=c(1,length(t),1))
-#for ( i in 1:1)
-#  for (j in 1:length(t))
-#    data[i,j,] <- data_df[j,i]
-#JuliaCall::julia_assign("t", t-t_0)
-#JuliaCall::julia_assign("data", data)
-#JuliaCall::julia_eval("obj = build_loss_objective(prob,Tsit5(),L2Loss(t,data), maxiters=10000,verbose=false); nothing")
+JuliaCall::julia_eval("@everywhere bound1 = Tuple{Float64,Float64}[(0.25,0.4),(10,15),(0.2,0.3),(20,23),(0.15,0.25),(1000,1001),(0.15,0.25)]")
+JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3, NumDimensions = 20,
+    Workers = workers(),
+    Method = :dxnes)")
 
-
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(10,15),(0.2,0.3),(20,25),(0.15,0.25)]")
-JuliaCall::julia_eval("res = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e4)")
-
-p2 <- JuliaCall::julia_eval("p = best_candidate(res)")
-
+p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
+#p2 <- c(0.3167985, 11.7315308, 0.2513445, 22.1471872, 0.1793161,1000,0.1)
+p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
 
@@ -313,45 +383,64 @@ for (plot_out in c(2:0)) {
 
 JuliaCall::julia_assign("p", p2)
 JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-JuliaCall::julia_eval("sol = solve(prob, MethodOfSteps(Rodas5()), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
+JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
 sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
-  
-  
+
 if (plot_out == 2) png("Model_vs_Situation-1.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
 plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1], 
      xlab=paste("Days after", rnames[t_0]), 
-     ylab="Confirmed cases")
-lines(sol$t, sol$u[,1], lty=2)
-legend("topleft", legend <- c("Confirmed cases", "Modeled cases"), 
-       col=1,
+     ylab="Confirmed cases",
+     col=1,pch=1)
+points(c(t_0:len_ger_data)-t_0, ger_data_recovered[c(t_0:len_ger_data),1],col=3,pch=2)
+points(c(t_0:len_ger_data)-t_0, ger_data_deaths[c(t_0:len_ger_data),1],col=2,pch=3)
+lines(sol$t, sol$u[,1], lty=2, col=1)
+lines(sol$t, sol$u[,2], lty=2, col=2)
+lines(sol$t, sol$u[,3], lty=2, col=3)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Deaths", "Modelled cases"),
+       col=c(1,3,2,1),
        bty="n",
-       pch=c(1,-1),
+       pch=c(1,2,3,-1),
        lwd=1,
-       lty=c(-1,2),
+       lty=c(-1,-1,-1,2),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation vs Model COVID-19 in Germany",
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
 if (plot_out == 2) png("Model_vs_Situation-2.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
 plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1]/x_max*100, 
      xlab=paste("Days after", rnames[t_0]), 
-     ylab="Cases (%)")
-lines(sol$t, (sol$u[,1])/x_max*100, lty=2)
-legend("topleft", legend <- c("Confirmed cases", "Modeled cases"), 
-       col=1,
+     ylab="Cases (%)",
+     pch=1)
+points(c(t_0:len_ger_data)-t_0, ger_data_recovered[c(t_0:len_ger_data),1]/x_max*100,col=3,pch=2)
+points(c(t_0:len_ger_data)-t_0, ger_data_deaths[c(t_0:len_ger_data),1]/x_max*100,col=2,pch=3)
+lines(sol$t, sol$u[,1]/x_max*100, lty=2, col=1)
+lines(sol$t, sol$u[,2]/x_max*100, lty=2, col=2)
+lines(sol$t, sol$u[,3]/x_max*100, lty=2, col=3)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Deaths", "Modelled cases"),
+       col=c(1,3,2,1),
        bty="n",
-       pch=c(1,-1),
+       pch=c(1,2,3,-1),
        lwd=1,
-       lty=c(-1,2),
+       lty=c(-1,-1,-1,2),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation vs Model COVID-19 in Germany",
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
@@ -362,6 +451,7 @@ if (plot_out > 1) dev.off()
 #####################################################################################
 
 if (plot_out == 2) png("Situation-1.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
 plot(ger_data_confirmed, 
      type="l", 
      col = 1, 
@@ -369,6 +459,10 @@ plot(ger_data_confirmed,
      xlab=paste("Days after", rnames[1]), 
      ylab="Cases")
 lines(ger_data_recovered , type="l", col = 2, lty = 2)
+for (i in c(0:100)) 
+  lines(c(i*7-22,i*7-22), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topleft", legend <- c("Confirmed cases", "Recovered cases"), 
        col=c(1,2),
        bty="n",
@@ -379,11 +473,12 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases"),
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation COVID-19 in Germany",
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
 if (plot_out == 2) png("Situation-2.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
 plot(ln_data_confirmed,
      type="p", 
      col = 1, 
@@ -396,9 +491,10 @@ lines(tc_0:tc_max,ln_res_2a$fitted.values, col = 1, lty = 2)
 lines(tc2_0:tc2_max,ln_res_3a$fitted.values, col = 1, lty = 3)
 lines((14+dt_r):(35+dt_r),ln_res_1b$fitted.values, col = 2, lty = 1)
 lines((tr_0+dt_r):tr_max,ln_res_2b$fitted.values, col = 2, lty = 2)
-for (i in c(0:25)) 
-  lines(c(i*7-22,i*7-22), (c(-10, 25)), type="l", lty = 5, col="light gray" )
-
+for (i in c(0:100)) 
+  lines(c(i*7-22,i*7-22), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 1st phase", "Regression 2nd phase (used for modeling)", "Regression 3nd phase (used for modeling)"), 
        col=c(1,2,16,16),
        bty="n",
@@ -409,11 +505,12 @@ legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation COVID-19 in Germany",
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
 if (plot_out == 2) png("Situation-3.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
 R0_plot <- data.frame(t = c(tc_0:(len_ger_data)), R0 = 0)
 for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- exp(lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] * te) - 1
 R0_plot$t <- R0_plot$t - R0_plot$t[1] 
@@ -424,8 +521,10 @@ plot(R0_plot$t, R0_plot$R0,
      ylab="Basic Reproductive Number R0")
 lines(lowess(R0_plot),lty=2,col=2)
 lines(c(0,length(R0_plot$R0)-1), c(1, 1),lty=3,col=3)
-for (i in c(0:25)) 
-  lines(c(i*7-22-tc_0,i*7-22-tc_0), (c(-10, 25)), type="l", lty = 5, col="light gray" )
+for (i in c(0:100)) 
+  lines(c(i*7-22,i*7-22), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topright", legend <- c("Determined from a period of 3 days.", "Trend of Estimate", "Steady State"), 
        col=c(1,2,3),
        bty="n",
@@ -436,7 +535,7 @@ legend("topright", legend <- c("Determined from a period of 3 days.", "Trend of 
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Situation COVID-19 in Germany",
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 #####################################################################################
@@ -446,12 +545,12 @@ if (plot_out > 1) dev.off()
 #####################################################################################
 
 if (plot_out == 2) png("Forecast-1.png", width = 640, height = 480)
-
+par(mar=c(5,6,7,5)+0.1)
 plot(sol$t,sol$u[,7],
      type="l", 
      xlab=paste("Days after", rnames[t_0]), 
      ylab="Cases", 
-     ylim=c(0,x_max), 
+     ylim=c(0,1e5), 
      xlim=c(0,250), 
      lty=1, col=1)
 lines(sol$t, sol$u[,6], lty=2, col=2)
@@ -460,8 +559,10 @@ lines(sol$t, sol$u[,4], lty=4, col=4)
 lines(sol$t, sol$u[,3], lty=5, col=5)
 lines(sol$t, sol$u[,2], lty=6, col=6)
 lines(sol$t, sol$u[,1], lty=7, col=16)
-for (i in c(0:100)) 
-  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"),       col=c(1:6,16),
        bty="n",
        lwd=1,
@@ -470,11 +571,12 @@ legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubatio
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
 if (plot_out == 2) png("Forecast-2.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
 plot(sol$t,sol$u[,7]/x_max*100,
      type="l", 
      xlab=paste("Days after", rnames[t_0]),
@@ -488,8 +590,10 @@ lines(sol$t, sol$u[,4]/x_max*100, lty=4, col=4)
 lines(sol$t, sol$u[,3]/x_max*100, lty=5, col=5)
 lines(sol$t, sol$u[,2]/x_max*100, lty=6, col=6)
 lines(sol$t, sol$u[,1]/x_max*100, lty=7, col=16)
-for (i in c(0:100)) 
-  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"), 
        col=c(1:6,16),
        bty="n",
@@ -499,7 +603,7 @@ legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubatio
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
@@ -510,8 +614,7 @@ max(sol$u[,4])/nh_max
 
 
 if (plot_out == 2) png("Forecast-ARDS-1.png", width = 640, height = 480)
-
-par(mar=c(5,6,6,5)+0.1)
+par(mar=c(5,6,7,5)+0.1)
 
 plot(sol$t, sol$u[,4], 
      type="l",
@@ -529,10 +632,12 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      axes = F,
      xlim=c(0,250), 
      lty=3, col=3)
-for (i in c(0:100)) 
-  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
        col=c(1:6,16),
        bty="n",
@@ -542,12 +647,12 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Worklo
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 if (plot_out == 2) png("Forecast-ARDS-2.png", width = 640, height = 480)
 
-par(mar=c(5,6,6,5)+0.1)
+par(mar=c(5,6,7,5)+0.1)
 
 plot(sol$t, sol$u[,4]/x_max*100, 
      type="l",
@@ -565,10 +670,12 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      axes = F,
      xlim=c(0,250), 
      lty=3, col=3)
-for (i in c(0:100)) 
-  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
        col=c(1:6,16),
        bty="n",
@@ -578,7 +685,7 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Worklo
        x.intersp = 2.5,
        ncol=1)
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
@@ -586,17 +693,18 @@ if (plot_out > 1) dev.off()
 
 #####################################################################################
 #
-# week bevore 03/23/2020
+# Scenario 1 no social distaining and no lockdown
 #   
 #####################################################################################
 
-JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[4], p2[1]))
+JuliaCall::julia_assign("p", c(p2[1], 1000, p2[1], 1001, p2[1], 1002, p2[1]))
 JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
+JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
 sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
 
 
-if (plot_out == 2) png("Forecast-1-old.png", width = 640, height = 480)
+if (plot_out == 2) png("Forecast-1-scenario-1.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
 plot(sol$t,sol$u[,7],
      type="l", 
      xlab=paste("Days after", rnames[t_0]), 
@@ -610,22 +718,26 @@ lines(sol$t, sol$u[,4], lty=4, col=4)
 lines(sol$t, sol$u[,3], lty=5, col=5)
 lines(sol$t, sol$u[,2], lty=6, col=6)
 lines(sol$t, sol$u[,1], lty=7, col=16)
-for (i in c(0:100)) 
-  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
-legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"),       col=c(1:6,16),
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"),
+       col=c(1:6,16),
        bty="n",
        lwd=1,
        lty=c(1:7),
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-if (plot_out != 2) title("Forecast COVID-19 in Germany (week bevore 03/23/2020", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out != 2) title("Scenario 1 no social distaining and no lockdown", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
 
-if (plot_out == 2) png("Forecast-2-old.png", width = 640, height = 480)
+if (plot_out == 2) png("Forecast-2-scenario-1.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
 plot(sol$t,sol$u[,7]/x_max*100,
      type="l", 
      xlab=paste("Days after", rnames[t_0]),
@@ -639,8 +751,10 @@ lines(sol$t, sol$u[,4]/x_max*100, lty=4, col=4)
 lines(sol$t, sol$u[,3]/x_max*100, lty=5, col=5)
 lines(sol$t, sol$u[,2]/x_max*100, lty=6, col=6)
 lines(sol$t, sol$u[,1]/x_max*100, lty=7, col=16)
-for (i in c(0:100)) 
-  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"), 
        col=c(1:6,16),
        bty="n",
@@ -649,8 +763,8 @@ legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubatio
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-if (plot_out != 2) title("Forecast COVID-19 in Germany (week bevore 03/23/2020)", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out != 2) title("Senario 1 no social distenining / no lockdown ", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
@@ -659,9 +773,9 @@ max(sol$u[,4])/x_max*100
 max(sol$u[,4])/nh_max
 
 
-if (plot_out == 2) png("Forecast-ARDS-1-old.png", width = 640, height = 480)
+if (plot_out == 2) png("Forecast-ARDS-1-scenario-1.png", width = 640, height = 480)
 
-par(mar=c(5,6,6,5)+0.1)
+par(mar=c(5,6,7,5)+0.1)
 
 plot(sol$t, sol$u[,4], 
      type="l",
@@ -679,10 +793,12 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      axes = F,
      xlim=c(0,250), 
      lty=3, col=3)
-for (i in c(0:100)) 
-  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
        col=c(1:6,16),
        bty="n",
@@ -691,13 +807,13 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Worklo
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out != 2) title("Scenario 1 no social distaining and no lockdown", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
-if (plot_out == 2) png("Forecast-ARDS-2-old.png", width = 640, height = 480)
+if (plot_out == 2) png("Forecast-ARDS-2-scenario-1.png", width = 640, height = 480)
 
-par(mar=c(5,6,6,5)+0.1)
+par(mar=c(5,6,7,5)+0.1)
 
 plot(sol$t, sol$u[,4]/x_max*100, 
      type="l",
@@ -715,10 +831,12 @@ plot(sol$t, sol$u[,4] / nh_max * 100,
      axes = F,
      xlim=c(0,250), 
      lty=3, col=3)
-for (i in c(0:100)) 
-  lines(c(i*7-2-tc_0,i*7-2-tc_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
 axis(4, pretty(sol$u[,4] / nh_max * 100,5))
 mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
        col=c(1:6,16),
        bty="n",
@@ -727,10 +845,323 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Worklo
        cex = 0.8,
        x.intersp = 2.5,
        ncol=1)
-if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+if (plot_out != 2) title("Scenario 1 no social distaining and no lockdown", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
+#####################################################################################
+#
+# Scenario 2 exit after day 50 without social distaining (worest case)
+#   
+#####################################################################################
+
+JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], 50, p2[1]))
+JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
+JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
+sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
+
+
+if (plot_out == 2) png("Forecast-1-scenario-2.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
+plot(sol$t,sol$u[,7],
+     type="l", 
+     xlab=paste("Days after", rnames[t_0]), 
+     ylab="Cases", 
+     ylim=c(0,x_max), 
+     xlim=c(0,250), 
+     lty=1, col=1)
+lines(sol$t, sol$u[,6], lty=2, col=2)
+lines(sol$t, sol$u[,5], lty=3, col=3)
+lines(sol$t, sol$u[,4], lty=4, col=4)
+lines(sol$t, sol$u[,3], lty=5, col=5)
+lines(sol$t, sol$u[,2], lty=6, col=6)
+lines(sol$t, sol$u[,1], lty=7, col=16)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"),       col=c(1:6,16),
+       bty="n",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Scenario 2 exit after day 50 without social distaining ", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+if (plot_out > 1) dev.off()
+
+
+
+if (plot_out == 2) png("Forecast-2-scenario-2.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
+plot(sol$t,sol$u[,7]/x_max*100,
+     type="l", 
+     xlab=paste("Days after", rnames[t_0]),
+     ylab="Cases (%)",
+     ylim=c(0,100),
+     xlim=c(0,250), 
+     lty=1, col=1)
+lines(sol$t, sol$u[,6]/x_max*100, lty=2, col=2)
+lines(sol$t, sol$u[,5]/x_max*100, lty=3, col=3)
+lines(sol$t, sol$u[,4]/x_max*100, lty=4, col=4)
+lines(sol$t, sol$u[,3]/x_max*100, lty=5, col=5)
+lines(sol$t, sol$u[,2]/x_max*100, lty=6, col=6)
+lines(sol$t, sol$u[,1]/x_max*100, lty=7, col=16)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"), 
+       col=c(1:6,16),
+       bty="n",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Scenario 2 exit after day 50 without social distaining ", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+if (plot_out > 1) dev.off()
+
+
+max(sol$u[,4])
+max(sol$u[,4])/x_max*100
+max(sol$u[,4])/nh_max
+
+
+if (plot_out == 2) png("Forecast-ARDS-1-scenario-2.png", width = 640, height = 480)
+
+par(mar=c(5,6,7,5)+0.1)
+
+plot(sol$t, sol$u[,4], 
+     type="l",
+     xlab=paste("Days after", rnames[t_0]), 
+     ylab="Cases", 
+     ylim=c(0,max(sol$u[,2],sol$u[,4])), 
+     xlim=c(0,250), 
+     lty=1, col=1)
+lines(sol$t, sol$u[,2], type="l", lty=2, col=2)
+par(new=T)
+plot(sol$t, sol$u[,4] / nh_max * 100, 
+     type="l",
+     xlab="", 
+     ylab="",
+     axes = F,
+     xlim=c(0,250), 
+     lty=3, col=3)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+axis(4, pretty(sol$u[,4] / nh_max * 100,5))
+mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
+       col=c(1:6,16),
+       bty="n",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Scenario 2 exit after day 50 without social distaining ", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+if (plot_out > 1) dev.off()
+
+if (plot_out == 2) png("Forecast-ARDS-2-scenario-2.png", width = 640, height = 480)
+
+par(mar=c(5,6,7,5)+0.1)
+
+plot(sol$t, sol$u[,4]/x_max*100, 
+     type="l",
+     xlab=paste("Days after", rnames[t_0]), 
+     ylab="Cases (%)", 
+     ylim=c(0,max(sol$u[,2],sol$u[,4])/x_max*100), 
+     xlim=c(0,250), 
+     lty=1, col=1)
+lines(sol$t, sol$u[,2]/x_max*100, type="l", lty=2, col=2)
+par(new=T)
+plot(sol$t, sol$u[,4] / nh_max * 100, 
+     type="l",
+     xlab="", 
+     ylab="",
+     axes = F,
+     xlim=c(0,250), 
+     lty=3, col=3)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+axis(4, pretty(sol$u[,4] / nh_max * 100,5))
+mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
+       col=c(1:6,16),
+       bty="n",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Scenario 2 exit after day 50 without social distaining ", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+if (plot_out > 1) dev.off()
+
+#####################################################################################
+#
+# Scenario 3 exit after day 50 with social distaining (better case)
+#   
+#####################################################################################
+
+JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], 50, p2[3]))
+JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
+JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
+sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
+
+
+if (plot_out == 2) png("Forecast-1-scenario-3.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
+plot(sol$t,sol$u[,7],
+     type="l", 
+     xlab=paste("Days after", rnames[t_0]), 
+     ylab="Cases", 
+     ylim=c(0,x_max), 
+     xlim=c(0,250), 
+     lty=1, col=1)
+lines(sol$t, sol$u[,6], lty=2, col=2)
+lines(sol$t, sol$u[,5], lty=3, col=3)
+lines(sol$t, sol$u[,4], lty=4, col=4)
+lines(sol$t, sol$u[,3], lty=5, col=5)
+lines(sol$t, sol$u[,2], lty=6, col=6)
+lines(sol$t, sol$u[,1], lty=7, col=16)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"),       col=c(1:6,16),
+       bty="n",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Scenario 3 exit after day 50 with social distaining", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+if (plot_out > 1) dev.off()
+
+
+
+if (plot_out == 2) png("Forecast-2-scenario-3.png", width = 640, height = 480)
+par(mar=c(5,6,7,5)+0.1)
+plot(sol$t,sol$u[,7]/x_max*100,
+     type="l", 
+     xlab=paste("Days after", rnames[t_0]),
+     ylab="Cases (%)",
+     ylim=c(0,100),
+     xlim=c(0,250), 
+     lty=1, col=1)
+lines(sol$t, sol$u[,6]/x_max*100, lty=2, col=2)
+lines(sol$t, sol$u[,5]/x_max*100, lty=3, col=3)
+lines(sol$t, sol$u[,4]/x_max*100, lty=4, col=4)
+lines(sol$t, sol$u[,3]/x_max*100, lty=5, col=5)
+lines(sol$t, sol$u[,2]/x_max*100, lty=6, col=6)
+lines(sol$t, sol$u[,1]/x_max*100, lty=7, col=16)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topright", legend <- c("Susceptibles (noninfected)", "Exposed (incubation time)", "Infected", "Hospitalized (ARDS)", "Recovered", "Deaths","Total Infected"), 
+       col=c(1:6,16),
+       bty="n",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Scenario 3 exit after day 50 with social distaining", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+if (plot_out > 1) dev.off()
+
+
+max(sol$u[,4])
+max(sol$u[,4])/x_max*100
+max(sol$u[,4])/nh_max
+
+
+if (plot_out == 2) png("Forecast-ARDS-1-scenario-3.png", width = 640, height = 480)
+
+par(mar=c(5,6,7,5)+0.1)
+
+plot(sol$t, sol$u[,4], 
+     type="l",
+     xlab=paste("Days after", rnames[t_0]), 
+     ylab="Cases", 
+     ylim=c(0,max(sol$u[,2],sol$u[,4])), 
+     xlim=c(0,250), 
+     lty=1, col=1)
+lines(sol$t, sol$u[,2], type="l", lty=2, col=2)
+par(new=T)
+plot(sol$t, sol$u[,4] / nh_max * 100, 
+     type="l",
+     xlab="", 
+     ylab="",
+     axes = F,
+     xlim=c(0,250), 
+     lty=3, col=3)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+axis(4, pretty(sol$u[,4] / nh_max * 100,5))
+mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
+       col=c(1:6,16),
+       bty="n",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Scenario 3 exit after day 50 with social distaining", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+if (plot_out > 1) dev.off()
+
+if (plot_out == 2) png("Forecast-ARDS-2-scenario-3.png", width = 640, height = 480)
+
+par(mar=c(5,6,7,5)+0.1)
+
+plot(sol$t, sol$u[,4]/x_max*100, 
+     type="l",
+     xlab=paste("Days after", rnames[t_0]), 
+     ylab="Cases (%)", 
+     ylim=c(0,max(sol$u[,2],sol$u[,4])/x_max*100), 
+     xlim=c(0,250), 
+     lty=1, col=1)
+lines(sol$t, sol$u[,2]/x_max*100, type="l", lty=2, col=2)
+par(new=T)
+plot(sol$t, sol$u[,4] / nh_max * 100, 
+     type="l",
+     xlab="", 
+     ylab="",
+     axes = F,
+     xlim=c(0,250), 
+     lty=3, col=3)
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+axis(4, pretty(sol$u[,4] / nh_max * 100,5))
+mtext("Hostpital Workload compared to 2017 (%)", side=4,line=3,las=0)
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", "Hostpital Workload"), 
+       col=c(1:6,16),
+       bty="n",
+       lwd=1,
+       lty=c(1:7),
+       cex = 0.8,
+       x.intersp = 2.5,
+       ncol=1)
+if (plot_out != 2) title("Scenario 3 exit after day 50 with social distaining", 
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+if (plot_out > 1) dev.off()
 
 #####################################################################################
 #
@@ -738,16 +1169,16 @@ if (plot_out > 1) dev.off()
 #   
 #####################################################################################
 
-JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[3], p2[1]))
+JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[3], p2[1], p2[3], p2[1]))
 JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
+JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
 sol1 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
 
 rbcol = rainbow(11)
 
 if (plot_out == 2) png("Forecast-ARDS-3.png", width = 640, height = 480)
 
-par(mar=c(5,6,6,5)+0.1)
+par(mar=c(5,6,7,5)+0.1)
 
 plot(sol1$t, (sol1$u[,4]), 
      type="l",
@@ -765,14 +1196,15 @@ mtext(paste("Time (Days after ", rnames[t_0],")", sep = ""),side=1,col="black",l
 
 for (i in c(0:10))
 {
-  tk_2 <- 7
+  tk_2 <- 22
   R0_2 <- 0.4 + i * 0.2
   f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
   k2 <- uniroot(f_k2 , c(0.01, 1))$root
   
-  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2, tk_2+1, k2))
+  p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2)
+  JuliaCall::julia_assign("p", p_var)
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
   sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   par(new=T)
@@ -780,21 +1212,23 @@ for (i in c(0:10))
   lines(sol2$t, (sol2$u[,2]), type="l", lty=2, col=rbcol[i])
   
   par(new=T)
-  plot(sol2$t, sol2$u[,8], ylim = c(0.2,1.5), xlim=c(0,150), type="l", lty=3, col=rbcol[i], axes=F, xlab="", ylab="")
+  plot(sol2$t, k(p_var, sol2$t), ylim = c(0.2,1.5), xlim=c(0,150), type="l", lty=3, col=rbcol[i], axes=F, xlab="", ylab="")
   if(i==0)
   {
-    axis(4, pretty(range(sol2$u[,8]),10))
+    axis(4, pretty(range(k(p_var, sol2$t)),10))
     mtext(expression('Growths Rate '*(D^-1)), side=4,line=3,las=0)
   }
 }
 
 par(new=T)
 plot(c(0,250), log(c(nh_max, nh_max)), type="l", lty = 4, col="grey", axes=F, xlab="", ylab="", ylim=c(0,1)*max(log(sol1$u[,2])), xlim=c(0,150))
-for (i in c(0:25)) 
-  lines(c(i*7+2,i*7+2), (c(-10, 120)), type="l", lty = 5, col="light gray" )
-lines(c(23,23), (c(-10, 25)), type="l", lty = 5, col="grey" )
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+axis(4, pretty(sol1$u[,4] / nh_max * 100,5))
+lines(c(22,22), (c(-10, 25)), type="l", lty = 5, col="grey" )
 
-
+mtext("Week number (2020)",side=3,line=2,las=0)
 legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", paste("R0 =", 0.4 + c(0:10)*.2)), 
        col=c(1,1,rbcol[0:11]),
        bty="n",
@@ -806,7 +1240,7 @@ legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", paste("R0 =", 0.4
 box()
 
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
@@ -815,7 +1249,7 @@ rbcol = rainbow(11)
 
 if (plot_out == 2) png("Forecast-ARDS-4.png", width = 640, height = 480)
 
-par(mar=c(5,6,6,5)+0.1)
+par(mar=c(5,6,7,5)+0.1)
 
 plot(sol1$t, (sol1$u[,4]), 
      type="l",
@@ -833,14 +1267,15 @@ mtext(paste("Time (Days after ", rnames[t_0],")", sep = ""),side=1,col="black",l
 
 for (i in c(0:10))
 {
-  tk_2 <- 17 + i * 3
+  tk_2 <- 16 + i * 3
   R0_2 <- 1
   f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
   k2 <- uniroot(f_k2 , c(0.01, 1))$root
   
-  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2, tk_2+1, k2))
+  p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2)
+  JuliaCall::julia_assign("p", p_var)
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
   sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   par(new=T)
@@ -848,21 +1283,22 @@ for (i in c(0:10))
   lines(sol2$t, (sol2$u[,2]), type="l", lty=2, col=rbcol[i])
   
   par(new=T)
-  plot(sol2$t, sol2$u[,8], ylim = c(0.2,1.5), xlim=c(0,150), type="l", lty=3, col=rbcol[i], axes=F, xlab="", ylab="")
+  plot(sol2$t, k(p_var, sol2$t), ylim = c(0.2,1.5), xlim=c(0,150), type="l", lty=3, col=rbcol[i], axes=F, xlab="", ylab="")
   if(i==0)
   {
-    axis(4, pretty(range(sol2$u[,8]),10))
+    axis(4, pretty(range(k(p_var, sol2$t)),10))
     mtext(expression('Growths Rate '*(D^-1)), side=4,line=3,las=0)
   }
 }
 
 par(new=T)
 plot(c(0,250), (c(nh_max, nh_max)), type="l", lty = 4, col="grey", axes=F, xlab="", ylab="", ylim=c(0,1)*max(log(sol1$u[,2])), xlim=c(0,150))
-for (i in c(0:25)) 
-  lines(c(i*7+2,i*7+2), (c(-10, 25)), type="l", lty = 5, col="light gray" )
-lines(c(23,23), (c(-10, 25)), type="l", lty = 5, col="grey" )
-
-legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", paste("t =", c(0:10)*3+17)), 
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+lines(c(22,22), (c(-10, 25)), type="l", lty = 5, col="grey" )
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", paste("t =", c(0:10)*3+19)), 
        col=c(1,1,rbcol[0:11]),
        bty="n",
        lwd=1,
@@ -874,7 +1310,7 @@ box()
 
 
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
@@ -884,7 +1320,7 @@ rbcol = rainbow(11)
 
 if (plot_out == 2) png("Forecast-ARDS-5.png", width = 640, height = 480)
 
-par(mar=c(5,6,6,5)+0.1)
+par(mar=c(5,6,7,5)+0.1)
 
 sol1$u[log(sol1$u[,4])<=0,4] <- 1 
 sol1$u[log(sol1$u[,2])<=0,6] <- 1 
@@ -905,38 +1341,41 @@ mtext(paste("Time (Days after ", rnames[t_0],")", sep = ""),side=1,col="black",l
 
 for (i in c(0:10))
 {
-  tk_2 <- 17 + i * 3
+  tk_2 <- 16 + i * 3
   R0_2 <- 1
   f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
   k2 <- uniroot(f_k2 , c(0.01, 1))$root
   
-  JuliaCall::julia_assign("p", c(p2[1], tk_2, k2, tk_2+1, k2))
+  
+  p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2)
+  JuliaCall::julia_assign("p", p_var)
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Tsit5(), reltol=1e-5, abstol=1e-6, maxiters = 10000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-12, maxiters = 10000, saveat=saveat); nothing")
   sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   par(new=T)
-  sol2$u[log(sol2$u[,4])<=0,4] <- 1 
-  sol2$u[log(sol2$u[,2])<=0,6] <- 1 
+  sol2$u[sol2$u[,4]<1,4] <- 1 
+  sol2$u[sol2$u[,2]<1,6] <- 1 
   plot(sol2$t, log(sol2$u[,4]), type="l", lty=1, col=rbcol[i], axes=F, xlab="", ylab="", ylim=c(-0.2,1)*max(log(sol1$u[,4])),xlim=c(0,150))
   lines(sol2$t, log(sol2$u[,2]), type="l", lty=2, col=rbcol[i])
   
   par(new=T)
-  plot(sol2$t, sol2$u[,8], ylim = c(0.2,1.5), xlim=c(0,150), type="l", lty=3, col=rbcol[i], axes=F, xlab="", ylab="")
+  plot(sol2$t, k(p_var, sol2$t), ylim = c(0.2,1.5), xlim=c(0,150), type="l", lty=3, col=rbcol[i], axes=F, xlab="", ylab="")
   if(i==0)
   {
-    axis(4, pretty(range(sol2$u[,8]),10))
+    axis(4, pretty(range(k(p_var, sol2$t)),10))
     mtext(expression('Growths Rate '*(D^-1)), side=4,line=2.5,las=0)
   }
 }
 
 par(new=T)
 plot(c(0,250), log(c(nh_max, nh_max)), type="l", lty = 4, col="grey", axes=F, xlab="", ylab="", ylim=c(0,1)*max(log(sol1$u[,2])), xlim=c(0,150))
-for (i in c(0:25)) 
-  lines(c(i*7+2,i*7+2), (c(-10, 25)), type="l", lty = 5, col="light gray" )
-lines(c(23,23), (c(-10, 25)), type="l", lty = 5, col="grey" )
-
-legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", paste("t =", c(0:10)*3+17)), 
+for (i in c(1:100)) 
+  lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+lines(c(22,22), (c(-10, 25)), type="l", lty = 5, col="grey" )
+mtext("Week number (2020)",side=3,line=2,las=0)
+legend("topleft", legend <- c("Hospitalized (ARDS)", "Deaths", paste("t =", c(0:10)*3+19)), 
        col=c(1,1,rbcol[0:11]),
        bty="n",
        lwd=1,
@@ -948,7 +1387,7 @@ box()
 
 
 if (plot_out != 2) title("Forecast COVID-19 in Germany", 
-                         sub="Created by Sören Thiering 03/27/2020. Email: soeren.thiering@hs-anhalt.de")
+                         sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
 
 
