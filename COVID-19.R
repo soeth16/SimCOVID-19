@@ -349,12 +349,12 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-6, a
 
 
 JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(10,15),(0.2,0.3),(20,23),(0.15,0.25),(1000,1000+1e-9),(0.15,0.15+1e-9)]")
-#JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3, NumDimensions = 5,
-#    Workers = workers(),
-#    Method = :dxnes)")
+JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3, NumDimensions = 5,
+    Workers = workers(),
+    Method = :dxnes)")
 
-#p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-p2 <- c(0.317511, 11.7132, 0.251697, 21.9461, 0.179116, 1000, 0.1)
+p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
+#p2 <- c(0.317511, 11.7132, 0.251697, 21.9461, 0.179116, 1000, 0.1)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
