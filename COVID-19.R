@@ -509,7 +509,7 @@ for (plot_out in c(2:0)) {
   if (plot_out == 2) png("Situation-3.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
   R0_plot <- data.frame(t = c(tc_0:(len_ger_data)), R0 = 0)
-  for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- exp(lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] * te) - 1
+  for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- exp((lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] -1/te) * te)
   R0_plot$t <- R0_plot$t - R0_plot$t[1] 
   plot(R0_plot$t, R0_plot$R0, 
        type = "p", 
