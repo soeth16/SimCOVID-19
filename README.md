@@ -98,7 +98,7 @@ The predicted begin of a new phase is linked to a real event!
 
 ![Forecast ARDS](Forecast-ARDS-2.png)
 
-### Scenario 1 no social distancing and no lockdown
+### Scenario 1 - no social distancing and no lock down
 
 ![Forecast as Fraction](Forecast-2-scenario-1.png)
 
@@ -110,13 +110,13 @@ The day of health system crash is close to the timepiont the shutdown if an $R_0
 
 ![Forecast as Fraction](Forecast-ARDS-4.png)
 
-### Scenario 2 exit after day 50 without social distancing (worest case)
+### Scenario 2 - exit lock down after day 50 without social distancing (worest case)
 
 ![Forecast as Fraction](Forecast-2-scenario-2.png)
 
 ![Forecast ARDS](Forecast-ARDS-2-scenario-2.png)
 
-### Scenario 3 exit after day 50 with social distancing (better case)
+### Scenario 3 - exit lock down after day 50 with social distancing (better case)
 
 ![Forecast as Fraction](Forecast-2-scenario-3.png)
 
