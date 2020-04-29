@@ -11,94 +11,56 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 **Parameter:**
 
-| Name                  |         Value | Description                                | Source |
-|-----------------------|--------------:|--------------------------------------------|--------|
-| $k(t)$                | ~ 0.15 to 0.3 | growth rate                                |        |
-| $n_{max}$             |      83019213 | max inahbitants                            |        |
-| $t_{e}$               |           5.1 | exposed / incubation time                  |        |
-| $t_{i}$               |            12 | time of a moderate  infection              |        |
-| $t_{h}$               |             8 | time until hostspitalisation               |        |
-| $t_{h,i}$             |            14 | time for hostspitalisation with ARDS       |        |
-| $t_{h,d}$             |             2 | time until death                           |        |
-| $n_{h,max}$           |         28031 | max intensive beds for treating ARDS       |        |
-| $\varphi_{h}$         |          0.14 | propotion hostspitalisation with ARDS      |        |
-| $\varphi_{d}(u_h(t))$ |        ~ 0.05 | propotion deaths                           |        |
-| $\varphi_{d,min}$     |    0.02282158 | propotion deaths with hostspitalisation    |        |
-| $\varphi_{d,max}$     |    0.09687916 | propotion deaths without hostspitalisation |        |
+| Name                                                                                                            |         Value | Description                                | Source |
+|-----------------------------------------------------------------------------------------------------------------|--------------:|--------------------------------------------|--------|
+| ![$k(t)$](https://render.githubusercontent.com/render/math?math=%24k(t)%24)                                     | ~ 0.15 to 0.3 | growth rate                                |        |
+| ![$n_{max}$](https://render.githubusercontent.com/render/math?math=%24n_%7Bmax%7D%24)                           |      83019213 | max inahbitants                            |        |
+| ![$t_{e}$](https://render.githubusercontent.com/render/math?math=%24t_%7Be%7D%24)                               |           5.1 | exposed / incubation time                  |        |
+| ![$t_{i}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bi%7D%24)                               |            12 | time of a moderate  infection              |        |
+| ![$t_{h}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%7D%24)                               |             8 | time until hostspitalisation               |        |
+| ![$t_{h,i}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%2Ci%7D%24)                         |            14 | time for hostspitalisation with ARDS       |        |
+| ![$t_{h,d}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%2Cd%7D%24)                         |             2 | time until death                           |        |
+| ![$n_{h,max}$](https://render.githubusercontent.com/render/math?math=%24n_%7Bh%2Cmax%7D%24)                     |         28031 | max intensive beds for treating ARDS       |        |
+| ![$\varphi_{h}$](https://render.githubusercontent.com/render/math?math=%24%5Cvarphi_%7Bh%7D%24)                 |          0.14 | propotion hostspitalisation with ARDS      |        |
+| ![$\varphi_{d}(u_h(t))$](https://render.githubusercontent.com/render/math?math=%24%5Cvarphi_%7Bd%7D(u_h(t))%24) |        ~ 0.05 | propotion deaths                           |        |
+| ![$\varphi_{d,min}$](https://render.githubusercontent.com/render/math?math=%24%5Cvarphi_%7Bd%2Cmin%7D%24)       |    0.02282158 | propotion deaths with hostspitalisation    |        |
+| ![$\varphi_{d,max}$](https://render.githubusercontent.com/render/math?math=%24%5Cvarphi_%7Bd%2Cmax%7D%24)       |    0.09687916 | propotion deaths without hostspitalisation |        |
 
 **Growth Rate:**
 
-$$
-k(t) =
-  \begin{cases}
-    k_{i+1}     & \quad \text{ if } t > t_{k,n+1} \\
-    k_{i+1}     & \quad \text{ if } t > t_{k,n} \wedge t \leq t_{k,n+1} \\
-    \cdots      & \quad \\
-    k_{1}       & \quad \text{ if } t > t_{k,1} \wedge t \leq t_{k,2}
-  \end{cases}
-$$
+![formula](https://render.githubusercontent.com/render/math?math=k(t)%20%3D%20%20%20%5Cbegin%7Bcases%7D%20%20%20%20%20k_%7Bi%2B1%7D%20%20%20%20%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2Cn%2B1%7D%20%5C%5C%20%20%20%20%20k_%7Bi%2B1%7D%20%20%20%20%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2Cn%7D%20%5Cwedge%20t%20%5Cleq%20t_%7Bk%2Cn%2B1%7D%20%5C%5C%20%20%20%20%20%5Ccdots%20%20%20%20%20%20%26%20%5Cquad%20%5C%5C%20%20%20%20%20k_%7B1%7D%20%20%20%20%20%20%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2C1%7D%20%5Cwedge%20t%20%5Cleq%20t_%7Bk%2C2%7D%20%20%20%5Cend%7Bcases%7D)
 
 **Deaths:**
 
-$$
-\varphi_{d}(u_h(t))
-  \begin{cases}
-    \varphi_{d,min} \cfrac {1-u_h(t)} {n_{h,max}} + \varphi_{d,max} \cfrac {u_h(t)} {n_{h,max}}     & \quad \text{ if } \cfrac {u_h(t)} {n_{h,max}} < 1 \\
-    \varphi_{d,max}                                                                                 & \quad \text{ if } \cfrac {u_h(t)} {n_{h,max}} \geq 1 \\
-  \end{cases}
-$$
+![formula](https://render.githubusercontent.com/render/math?math=%5Cvarphi_%7Bd%7D(u_h(t))%20%20%5Cbegin%7Bcases%7D%20%20%5Cvarphi_%7Bd%2Cmin%7D%20%5Ccfrac%20%7B1-u_h(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%2B%20%5Cvarphi_%7Bd%2Cmax%7D%20%5Ccfrac%20%7Bu_h(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20%5Ccfrac%20%7Bu_h(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%3C%201%20%5C%5C%20%20%5Cvarphi_%7Bd%2Cmax%7D%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20%5Ccfrac%20%7Bu_h(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%5Cgeq%201%20%5C%5C%20%20%5Cend%7Bcases%7D)
 
 **Susceptibles:**
 
-$$\cfrac{du_7(t)} {dt} = - k(t) \cfrac{u_7(t)} {n_{max}} u_7(t)$$
+![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_7(t)%7D%20%7Bdt%7D%20%3D%20-%20k(t)%20%5Ccfrac%7Bu_7(t)%7D%20%7Bn_%7Bmax%7D%7D%20u_7(t))
 
 **Exposed / Incubating:**
 
-$$\cfrac{du_6(t)} {dt}  =
-    + k(t) \cfrac{u_7(t)} {n_{max}} u_6(t)
-    - k(t-t_e) \cfrac{u_7(t-t_e)} {n_{max}} u_6(t-t_e)
-$$
+![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_6(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t)%20%5Ccfrac%7Bu_7(t)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t)%20%20%20%20%20-%20k(t-t_e)%20%5Ccfrac%7Bu_7(t-t_e)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e))
 
 **Infected:**
 
-$$\cfrac{du_5(t)} {dt}  =
-    + k(t-t_e) \cfrac{u_7(t-t_e)} {n_{max}} u_6(t-t_e)
-    - k(t-t_e-t_i) \cfrac{u_7(t-t_e-t_i)} {n_{max}} u_6(t-t_e-t_i) (1-\varphi_{h})
-    - k(t-t_e-t_h) \cfrac{u_7(t-t_e-t_h)} {n_{max}} u_6(t-t_e-t_h) (\varphi_{h})
-$$  
+![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_5(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t-t_e)%20%5Ccfrac%7Bu_7(t-t_e)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e)%20%20%20%20%20-%20k(t-t_e-t_i)%20%5Ccfrac%7Bu_7(t-t_e-t_i)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_i)%20(1-%5Cvarphi_%7Bh%7D)%20%20%20%20%20-%20k(t-t_e-t_h)%20%5Ccfrac%7Bu_7(t-t_e-t_h)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h)%20(%5Cvarphi_%7Bh%7D))
 
 **Hostspitalisation:**
 
-$$\cfrac{du_4(t)} {dt}  =
-    + k(t-t_e-t_h) \cfrac{u_7(t-t_e-t_h)} {n_{max}} u_6(t-t_e-t_h) (\varphi_{h})
-    - k(t-t_e-t_h-t_{h,i}) \cfrac{u_7(t-t_e-t_h-t_{h,i})} {n_{max}} u_6(t-t_e-t_h-t_{h,i}) (\varphi_{h}-\varphi_{d}(u_4(t-t_{h,i}+t{h,d})))
-    - k(t-t_e-t_h-t_{h,d}) \cfrac{u_7(t-t_e-t_h-t_{h,d})} {n_{max}} u_6(t-t_e-t_h-t_{h,d}) \varphi_{d}(u_4(t)))
-$$
+![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_4(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t-t_e-t_h)%20%5Ccfrac%7Bu_7(t-t_e-t_h)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h)%20(%5Cvarphi_%7Bh%7D)%20%20%20%20%20-%20k(t-t_e-t_h-t_%7Bh%2Ci%7D)%20%5Ccfrac%7Bu_7(t-t_e-t_h-t_%7Bh%2Ci%7D)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h-t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D-%5Cvarphi_%7Bd%7D(u_4(t-t_%7Bh%2Ci%7D%2Bt%7Bh%2Cd%7D)))%20%20%20%20%20-%20k(t-t_e-t_h-t_%7Bh%2Cd%7D)%20%5Ccfrac%7Bu_7(t-t_e-t_h-t_%7Bh%2Cd%7D)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h-t_%7Bh%2Cd%7D)%20%5Cvarphi_%7Bd%7D(u_4(t)))
 
 **Recovered:**
 
-$$
-\cfrac{du_3(t)} {dt}  =
-    + k(t-t_e-t_i) \cfrac{u_7(t-t_e-t_i)} {n_{max}} u_6(t-t_e-t_i) (1-\varphi_{h})
-    + k(t-t_e-t_h-t_{h,i}) \cfrac{u_7(t-t_e-t_h-t_{h,i})} {n_{max}} u_6(t-t_e-t_h-t_{h,i}) (\varphi_{h}-\varphi_{d}(u_4(t-t_{h,i}+t{h,d})))
-$$
+![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_3(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t-t_e-t_i)%20%5Ccfrac%7Bu_7(t-t_e-t_i)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_i)%20(1-%5Cvarphi_%7Bh%7D)%20%20%20%20%20%2B%20k(t-t_e-t_h-t_%7Bh%2Ci%7D)%20%5Ccfrac%7Bu_7(t-t_e-t_h-t_%7Bh%2Ci%7D)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h-t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D-%5Cvarphi_%7Bd%7D(u_4(t-t_%7Bh%2Ci%7D%2Bt%7Bh%2Cd%7D))))
 
 **Deaths:**
 
-$$
-\cfrac{du_2(t)} {dt}  =
-    + k(t-t_e-t_h-t_{h,d}) \cfrac{u_7(t-t_e-t_h-t_{h,d})} {n_{max}} u_6(t-t_e-t_h-t_{h,d}) \varphi_{d}(u_4(t)))
-$$
+![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_2(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t-t_e-t_h-t_%7Bh%2Cd%7D)%20%5Ccfrac%7Bu_7(t-t_e-t_h-t_%7Bh%2Cd%7D)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h-t_%7Bh%2Cd%7D)%20%5Cvarphi_%7Bd%7D(u_4(t)))
 
 **Confirmed:**
 
-$$
-\cfrac{du_1(t)} {dt}  =
-    + \cfrac{du_2(t)} {dt}
-    + \cfrac{du_3(t)} {dt}
-    + \cfrac{du_4(t)} {dt}
-    + \cfrac{du_5(t)} {dt}
-$$
+![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_1(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20%5Ccfrac%7Bdu_2(t)%7D%20%7Bdt%7D%20%20%20%20%20%2B%20%5Ccfrac%7Bdu_3(t)%7D%20%7Bdt%7D%20%20%20%20%20%2B%20%5Ccfrac%7Bdu_4(t)%7D%20%7Bdt%7D%20%20%20%20%20%2B%20%5Ccfrac%7Bdu_5(t)%7D%20%7Bdt%7D)
 
 ## Results
 
@@ -112,9 +74,7 @@ The growths rate is determined by logarithmic fitting of the confirmed cases:
 
 Basic Reproductive Number R0 has been determined from growths rate and median incubation time:
 
-$$
-R_0 = e^{k  t_e} -1
-$$
+![formula](https://render.githubusercontent.com/render/math?math=R_0%20%3D%20e%5E%7Bk%20%20t_e%7D)
 
 ![Situation - Basic Reproductive Number](Situation-3.png)
 
