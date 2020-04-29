@@ -322,9 +322,9 @@ S <-n_max - I - E - H - R - D
 data_df <- data.frame(C[t], D[t], R[t])
 
 JuliaCall::julia_assign("u0", c(C[t_0], D[t_0], R[t_0], H[t_0], I[t_0], E[t_0], S[t_0]))
-JuliaCall::julia_assign("tspan", c(0,250))
-JuliaCall::julia_assign("p", c(k1, tk_2, k2, tk_2+7, k2,1000,k1))
-JuliaCall::julia_assign("saveat", c(0:1000/1000*250))
+JuliaCall::julia_assign("tspan", c(0,len_ger_data-t_0+1))
+JuliaCall::julia_assign("p", c(k1, tk_2, k2, tk_2+7, k2,50,k2))
+JuliaCall::julia_assign("saveat", c(0,t-t_0+1))
 JuliaCall::julia_eval("@everywhere u0 = $u0");
 JuliaCall::julia_eval("@everywhere tspan = $tspan");
 JuliaCall::julia_eval("@everywhere p = $p");
@@ -348,8 +348,8 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-6, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(10,15),(0.2,0.3),(20,23),(0.15,0.25),(1000,1000+1e-9),(0.15,0.15+1e-9)]")
-JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3, NumDimensions = 5,
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.25),(45,51),(0.15,0.25)]")
+JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3, NumDimensions = 8,
     Workers = workers(),
     Method = :dxnes)")
 
@@ -358,6 +358,11 @@ p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
+
+JuliaCall::julia_assign("saveat", c(0:1000/1000*250))
+JuliaCall::julia_assign("tspan", c(0,250))
+JuliaCall::julia_eval("@everywhere tspan = $tspan");
+JuliaCall::julia_eval("@everywhere saveat = $saveat");
 
 #####################################################################################
 #
@@ -488,8 +493,8 @@ for (plot_out in c(2:0)) {
   lines(tc2_0:tc2_max,ln_res_3a$fitted.values, col = 1, lty = 3)
   lines((14+dt_r):(35+dt_r),ln_res_1b$fitted.values, col = 2, lty = 1)
   lines((tr_0+dt_r):tr_max,ln_res_2b$fitted.values, col = 2, lty = 2)
-  for (i in c(0:100)) 
-    lines(c(i*7-22,i*7-22), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+  for (i in c(1:100)) 
+    lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
   mtext("Week number (2020)",side=3,line=2,las=0)
   legend("topleft", legend <- c("Confirmed cases", "Recovered cases", "Regression 1st phase", "Regression 2nd phase (used for modeling)", "Regression 3nd phase (used for modeling)"), 
@@ -509,7 +514,7 @@ for (plot_out in c(2:0)) {
   if (plot_out == 2) png("Situation-3.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
   R0_plot <- data.frame(t = c(tc_0:(len_ger_data)), R0 = 0)
-  for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- exp((lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] -1/te) * te)
+  for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- exp((lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] ) * te)
   R0_plot$t <- R0_plot$t - R0_plot$t[1] 
   plot(R0_plot$t, R0_plot$R0, 
        type = "p", 
@@ -519,8 +524,37 @@ for (plot_out in c(2:0)) {
   lines(lowess(R0_plot),lty=2,col=2)
   lines(c(0,length(R0_plot$R0)-1), c(1, 1),lty=3,col=3)
   for (i in c(0:100)) 
-    lines(c(i*7-22,i*7-22), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
-  axis(3, c(1:100)*7-22, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+    lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+  axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+  mtext("Week number (2020)",side=3,line=2,las=0)
+  legend("topright", legend <- c("Determined from a period of 3 days.", "Trend of Estimate", "Steady State"), 
+         col=c(1,2,3),
+         bty="n",
+         pch=c(1,-1,-1),
+         lwd=1,
+         lty=c(-1,2,3),
+         cex = 0.8,
+         x.intersp = 2.5,
+         ncol=1)
+  if (plot_out != 2) title("Situation COVID-19 in Germany",
+                           sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+  if (plot_out > 1) dev.off()
+  
+  if (plot_out == 2) png("Situation-4.png", width = 640, height = 480)
+  par(mar=c(5,6,7,5)+0.1)
+  R0_plot <- data.frame(t = c(tc_0:(len_ger_data)), R0 = 0)
+  for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] + 1/te
+  R0_plot$t <- R0_plot$t - R0_plot$t[1] 
+  plot(R0_plot$t, R0_plot$R0, 
+       type = "p", 
+       ylim=c(0,0.5),
+       xlab=paste("Days after", rnames[tc_0]),
+       ylab=expression('Growth Rate '*(D^-1)))
+  lines(lowess(R0_plot),lty=2,col=2)
+  lines(c(0,length(R0_plot$R0)-1), c(1/te, 1/te),lty=3,col=3)
+  for (i in c(0:100)) 
+    lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+  axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
   mtext("Week number (2020)",side=3,line=2,las=0)
   legend("topright", legend <- c("Determined from a period of 3 days.", "Trend of Estimate", "Steady State"), 
          col=c(1,2,3),
@@ -1213,7 +1247,7 @@ for (plot_out in c(2:0)) {
     if(i==0)
     {
       axis(4, pretty(range(k(p_var, sol2$t)),10))
-      mtext(expression('Growths Rate '*(D^-1)), side=4,line=3,las=0)
+      mtext(expression('Growth Rate '*(D^-1)), side=4,line=3,las=0)
     }
   }
   
@@ -1284,7 +1318,7 @@ for (plot_out in c(2:0)) {
     if(i==0)
     {
       axis(4, pretty(range(k(p_var, sol2$t)),10))
-      mtext(expression('Growths Rate '*(D^-1)), side=4,line=3,las=0)
+      mtext(expression('Growth Rate '*(D^-1)), side=4,line=3,las=0)
     }
   }
   
@@ -1361,7 +1395,7 @@ for (plot_out in c(2:0)) {
     if(i==0)
     {
       axis(4, pretty(range(k(p_var, sol2$t)),10))
-      mtext(expression('Growths Rate '*(D^-1)), side=4,line=2.5,las=0)
+      mtext(expression('Growth Rate '*(D^-1)), side=4,line=2.5,las=0)
     }
   }
   
