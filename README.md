@@ -78,6 +78,12 @@ Basic Reproductive Number R0 has been determined from growths rate and median in
 
 ![Situation - Basic Reproductive Number](Situation-3.png)
 
+![Death Casses](Situation-5.png)
+
+Hidden cases are calculated by the amount of death casses per day.
+
+![Hidden Casses](Situation-6.png)
+
 ### Model vs Situation
 
 ![Model vs Situation](Model_vs_Situation-1.png)
