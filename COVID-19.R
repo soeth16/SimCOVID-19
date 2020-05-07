@@ -410,7 +410,7 @@ JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(11.6,11.8),(0
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3, NumDimensions = 10,
     Workers = workers(),
     TraceMode = :compact,
-    Method = :dxnes)")
+    Method = :adaptive_de_rand_1_bin_radiuslimited)")
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
 #p2 <- c(0.3236249, 11.6992487,  0.2552845, 21.8826199,  0.1848394, 50.7072263,  0.1882340)
