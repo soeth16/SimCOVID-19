@@ -99,16 +99,17 @@ ln_res_4b
 #   
 #####################################################################################
 
-# confirmed to death (determined by fit the overlapping)
+# confirmed to death (determined by overlapping the two curves)
 td <-10.5
-tdd <- trunc(td)
+tcd <- trunc(td)
 # assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
 te = 5.1
-ti = 12
-th = 8
-thi = 10
-thd = td - th
-thii = 6
+ti = 13 # determined by overlapping the two curves
+th = 8 
+thi = 10 
+thd = td - th 
+thii = 10
+
 
 # assume k_raw from ln(x)-plot
 k_raw = ln_res_2a$coefficients[2]
@@ -154,7 +155,7 @@ log(1+1)/te
 # assume median from 40:80 in germany (good)
 phi_d_1 <- as.numeric(quantile(
   ger_data_deaths[51:61]/(ger_data_confirmed[40:50]), 
-  probs = 0.1
+  probs = 0.33
 ))
 
 # assume Hubei / China (bad)
@@ -163,6 +164,12 @@ phi_d_2 <- as.numeric(quantile(
   probs = 0.9
 ))
 
+phi_d <- ger_data_deaths[t_0:len_ger_data]/ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
+phi_c <- phi_d / quantile(phi_d[25:45],probs=0.5)
+phi_c[1:22] <- 1
+phi_c <- lowess(phi_c,f=0.4)$y
+phi_r <-c(1:ti, phi_c[1:(length(phi_c)-ti)])
+phi_r[1:ti] <- 1
 
 # assume phi_h from max phi_d_2 (Hubei / China)
 phi_h <- 0.14
@@ -172,6 +179,7 @@ n_h_max <- 28031
 
 # assume population of germany from https://de.wikipedia.org/wiki/Deutschland (03/13/20)
 n_max <- 83.019213e6
+
 
 #####################################################################################
 #
@@ -214,7 +222,7 @@ JuliaCall::julia_eval("@everywhere phi_h = $phi_h")
 JuliaCall::julia_eval("@everywhere phi_d_1 = $phi_d_1")
 JuliaCall::julia_eval("@everywhere phi_d_2 = $phi_d_2")
 
-k = JuliaCall::julia_eval("@everywhere function k(p, t)
+JuliaCall::julia_eval("@everywhere function k(p, t)
     if (t >= p[6]) 
       p[7]
     elseif (t >= p[4] && t < p[6]) 
@@ -241,20 +249,20 @@ k <- function(p, t) {
 }
 
 
-phi_d = JuliaCall::julia_eval("@everywhere function phi_d(u, p)
+JuliaCall::julia_eval("@everywhere function phi_d(u, p)
     # phi_d for distributed hospital usage
-    #if (u > n_h_max) 
-    #  phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
-    #else 
-    #  phi_d_1
-    #end
+    if (u > n_h_max) 
+      phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
+    else 
+      phi_d_1
+    end
     
     # phi_d for hot spots without distribution
-    if (u / n_h_max < 1) 
-      phi_d_1 * (1 - (u / n_h_max)^2) + phi_d_2 * u / n_h_max
-    else
-      phi_d_2
-    end
+    #if (u / n_h_max < 1) 
+    #  phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max
+    #else
+    #  phi_d_2
+    #end
   end")
 
 f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
@@ -266,36 +274,35 @@ f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
     
     # Exposed / Incubating
     du[6] = (
-      + k(p, t) * u[7] / n_max * u[6] 
-      - k(p, t - te) * h(p, t - te; idxs = 7) / n_max * h(p, t - te; idxs = 6)
+      - du[7]
+      +h(p, t - te, Val{1}; idxs = 7)
     )
     
     # Infected
     du[5] = (
-      + k(p, t - te) * h(p, t - te; idxs = 7) / n_max * h(p, t - te; idxs = 6) 
-      - k(p, t - te - ti) * h(p, t - te - ti; idxs = 7) / n_max * h(p, t - te - ti; idxs = 6) * (1-phi_h)
-      #- k(p, t - te - th) * h(p, t - te - th; idxs = 7) / n_max * h(p, t - te - th; idxs = 6) * phi_h
-      + k(p, t - te - th - thi) * h(p, t - te - th - thi; idxs = 7) / n_max * h(p, t - te - th - thi; idxs = 6) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p))
-      - k(p, t - te - th - thi - thii) * h(p, t - te - th - thi - thii; idxs = 7) / n_max * h(p, t - te - th - thi - thii; idxs = 6) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p))
+      -h(p, t - te, Val{1}; idxs = 7)
+      +h(p, t - te - ti, Val{1}; idxs = 7) * (1-phi_h)
+      +h(p, t - te - th, Val{1}; idxs = 7) * phi_h
+      -h(p, t - te - th - thi, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p))
+      +h(p, t - te - th - thi - thii, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p))
     )
 
     # Hospitalization 
     du[4] = (
-      + k(p, t - te - th) * h(p, t - te - th; idxs = 7) / n_max * h(p, t - te - th; idxs = 6) * phi_h 
-      - k(p, t - te - th - thi) * h(p, t - te - th - thi; idxs = 7) / n_max * h(p, t - te - th - thi; idxs = 6) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p))
-      - k(p, t - te - th - thd) * h(p, t - te - th - thd; idxs = 7) / n_max * h(p, t - te - th - thd; idxs = 6) * phi_d(u[4], p)
+      - h(p, t - te - th, Val{1}; idxs = 7) *  phi_h 
+      + h(p, t - te - th - thi, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p))
+      + h(p, t - te - th - thd, Val{1}; idxs = 7) * phi_d(u[4], p)
     )
     
     # Recovered
     du[3] = ( 
-      + k(p, t - te - ti) * h(p, t - te - ti; idxs = 7) / n_max * h(p, t - te - ti; idxs = 6) * (1-phi_h) 
-      #+ k(p, t - te - th - thi) * h(p, t - te - th - thi; idxs = 7) / n_max * h(p, t - te - th - thi; idxs = 6) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p))
-      + k(p, t - te - th - thi - thii) * h(p, t - te - th - thi - thii; idxs = 7) / n_max * h(p, t - te - th - thi - thii; idxs = 6) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p))
+      - h(p, t - te - ti, Val{1}; idxs = 7) *  (1-phi_h) 
+      - h(p, t - te - th - thi - thii, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p))
     )
     
     # Deaths
     du[2] = ( 
-      + k(p, t - te - th - thd) * h(p, t - te - th - thd; idxs = 7) / n_max * h(p, t - te - th - thd; idxs = 6) * phi_d(u[4], p)
+      - h(p, t - te - th - thd, Val{1}; idxs = 7) *  phi_d(u[4], p)
     )
     
     # Confirmed
@@ -331,6 +338,16 @@ h = JuliaCall::julia_eval("@everywhere function h(p, t; idxs::Union{Nothing,Int}
     end
   end")
 
+h = JuliaCall::julia_eval("@everywhere function h(p, t, deriv::Type{Val{1}}; idxs::Union{Nothing,Int} = nothing)
+    if t > -te
+      - k(p, t) * u0[7] / n_max * u0[6] * (exp(k(p, t - te) * t))
+    else
+        0
+    end
+  end")
+
+
+
 
 
 #####################################################################################
@@ -345,15 +362,21 @@ tk_2 <- tc0_max - t_0 - te
 
 t = c(t_0:len_ger_data)
 C = ger_data_confirmed
+R <- ger_data_recovered
+D <- ger_data_deaths
+C[t] <- C[t]*phi_c
+R[t] <- R[t]*phi_r
 I <- ger_data_confirmed - ger_data_recovered - ger_data_deaths
 E <- I * k_raw/(k1 * exp(-k1*te))
 I <- I * 0.95
 H <- I * 0.05
-R <- ger_data_recovered
-D <- ger_data_deaths
 S <-n_max - I - E - H - R - D
 
-data_df <- data.frame(C[t], D[t], R[t])
+data_df <- data.frame(C = C[t], D = D[t], R = R[t])
+data_sd <- abs(data.frame(C = lowess(t,C[t],f=0.1)$y - data_df$C, D = lowess(t,D[t],f=0.3)$y - data_df$D, R = lowess(t,R[t],f=0.3)$y - data_df$R))
+
+plot(data_sd$R+10)
+
 
 JuliaCall::julia_assign("u0", c(C[t_0], D[t_0], R[t_0], H[t_0], I[t_0], E[t_0], S[t_0]))
 JuliaCall::julia_assign("tspan", c(0,len_ger_data-t_0+1))
@@ -368,16 +391,18 @@ JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
 data <- array(dim=c(3,length(t),1000))
 for (j in 1:length(t))
 {
-  data[1,j,] <- rnorm(1000,data_df[j,1],max(data_df[,1])*0.01)
-  data[2,j,] <- rnorm(1000,data_df[j,2],(max(data_df[,2])+data_df[j,2])*0.1)
-  data[3,j,] <- rnorm(1000,data_df[j,3],(max(data_df[,3])+data_df[j,3])*0.01)
+  data[1,j,] <- rnorm(1000,data_df[j,1], data_sd[j,1]+10)
+  data[2,j,] <- rnorm(1000,data_df[j,2], data_sd[j,2]+10)
+  data[3,j,] <- rnorm(1000,data_df[j,3], data_sd[j,3]+10)
 }
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
 JuliaCall::julia_eval("@everywhere t = $t")
 JuliaCall::julia_eval("@everywhere data = $data")
 JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:3, j in 1:length(t)]")
-JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 1e5, LogLikeLoss(t,distributions), verbose=true); nothing")
+JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-3, abstol=1e-6, maxiters = 1e5, LogLikeLoss(t,distributions), verbose=true); nothing")
+
+
 
 
 
@@ -388,7 +413,7 @@ JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e
     Method = :dxnes)")
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-#p2 <- c(0.296779, 11.6148, 0.257123, 21.9904, 0.168449, 50.9997, 0.135603)
+#p2 <- c(0.3236249, 11.6992487,  0.2552845, 21.8826199,  0.1848394, 50.7072263,  0.1882340)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
@@ -427,8 +452,12 @@ for (plot_out in c(2:0)) {
   plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1], 
        xlab=paste("Days after", rnames[t_0]), 
        ylab="Confirmed cases",
-       col=1,pch=1)
-  points(c(t_0:len_ger_data)-t_0, ger_data_recovered[c(t_0:len_ger_data),1],col=3,pch=2)
+       ylim=c(0,max( phi_c*ger_data_confirmed[c(t_0:len_ger_data),1])),
+       col="dark gray",pch=1)
+  points(c(t_0:len_ger_data)-t_0,  ger_data_recovered[c(t_0:len_ger_data),1],col="light green",pch=2)
+  
+  points(c(t_0:len_ger_data)-t_0, phi_c*ger_data_confirmed[c(t_0:len_ger_data),1],col=1,pch=1)
+  points(c(t_0:len_ger_data)-t_0, phi_r*ger_data_recovered[c(t_0:len_ger_data),1],col=3,pch=2)
   points(c(t_0:len_ger_data)-t_0, ger_data_deaths[c(t_0:len_ger_data),1],col=2,pch=3)
   lines(sol$t, sol$u[,1], lty=2, col=1)
   lines(sol$t, sol$u[,2], lty=2, col=2)
@@ -456,9 +485,13 @@ for (plot_out in c(2:0)) {
   plot(c(t_0:len_ger_data)-t_0, ger_data_confirmed[c(t_0:len_ger_data),1]/n_max*100, 
        xlab=paste("Days after", rnames[t_0]), 
        ylab="Cases (%)",
-       pch=1)
-  points(c(t_0:len_ger_data)-t_0, ger_data_recovered[c(t_0:len_ger_data),1]/n_max*100,col=3,pch=2)
+       ylim=c(0,max( phi_c*ger_data_confirmed[c(t_0:len_ger_data),1]/n_max*100)),
+       col="dark gray",pch=1)
+  points(c(t_0:len_ger_data)-t_0, ger_data_recovered[c(t_0:len_ger_data),1]/n_max*100,col="light green",pch=2)
+  points(c(t_0:len_ger_data)-t_0, phi_c*ger_data_confirmed[c(t_0:len_ger_data),1]/n_max*100,col=1,pch=2)
+  points(c(t_0:len_ger_data)-t_0, phi_r*ger_data_recovered[c(t_0:len_ger_data),1]/n_max*100,col=3,pch=2)
   points(c(t_0:len_ger_data)-t_0, ger_data_deaths[c(t_0:len_ger_data),1]/n_max*100,col=2,pch=3)
+  
   lines(sol$t, sol$u[,1]/n_max*100, lty=2, col=1)
   lines(sol$t, sol$u[,2]/n_max*100, lty=2, col=2)
   lines(sol$t, sol$u[,3]/n_max*100, lty=2, col=3)
@@ -616,16 +649,16 @@ for (plot_out in c(2:0)) {
   ger_data_deaths_day <- lowess(ger_data_deaths[t_0:len_ger_data]-ger_data_deaths[(t_0-1):(len_ger_data-1)],f=0.15)$y
   ger_data_confirmed_day <- lowess(ger_data_confirmed[t_0:len_ger_data]-ger_data_confirmed[(t_0-1):(len_ger_data-1)],f=0.15)$y
   
-  ger_data_phi_d <- ger_data_deaths_day[(tdd+1):length(ger_data_deaths_day)]/ger_data_confirmed_day[1:(length(ger_data_deaths_day)-tdd)]
+  ger_data_phi_d <- ger_data_deaths_day[(tcd+1):length(ger_data_deaths_day)]/ger_data_confirmed_day[1:(length(ger_data_deaths_day)-tcd)]
   
   #plot(1:length(ger_data_deaths_day),ger_data_confirmed_day)
-  #points((1:length(ger_data_deaths_day))-tdd,ger_data_deaths_day/0.043,col=2)
+  #points((1:length(ger_data_deaths_day))-tcd,ger_data_deaths_day/0.043,col=2)
   
-  plot(c((t_0+tdd):len_ger_data)-t_0, ger_data_phi_d*100, 
+  plot(c((t_0+tcd):len_ger_data)-t_0, ger_data_phi_d*100, 
        ylim=c(2,8),
        xlab=paste("Days after", rnames[t_0]),
-       ylab="Death Casses (%)")
-  lines(lowess(c((t_0+tdd):len_ger_data)-t_0, ger_data_phi_d*100,f=0.3),lty=2,col=2)
+       ylab="Death Cases (%)")
+  lines(lowess(c((t_0+tcd):len_ger_data)-t_0, ger_data_phi_d*100,f=0.3),lty=2,col=2)
   for (i in c(1:100)) 
     lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
@@ -638,16 +671,38 @@ for (plot_out in c(2:0)) {
   if (plot_out == 2) png("Situation-6.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
   
-  ger_data_phi_h <- ger_data_phi_d / as.numeric(quantile(ger_data_phi_d[(22:38)-tdd],probs = 0.5)) - 1
-  ger_data_phi_h <- ger_data_phi_d / as.numeric(mean(ger_data_phi_d[(22:38)-tdd])) - 1
+  ger_data_phi_h <- ger_data_phi_d / as.numeric(quantile(ger_data_phi_d[(22:38)-tcd],probs = 0.5)) - 1
+  ger_data_phi_h <- ger_data_phi_d / as.numeric(mean(ger_data_phi_d[(22:38)-tcd])) - 1
 
   
-  plot(c((t_0+tdd):len_ger_data)-t_0, ger_data_phi_h*100, 
+  plot(c((t_0+tcd):len_ger_data)-t_0, ger_data_phi_h*100, 
        #ylim=c(-100,100),
        xlab=paste("Days after", rnames[t_0]),
-       ylab="Hidden Casses (%)")
+       ylab="Hidden Cases Per Day (%)")
   lines(c(-1e9,1e9), c(0,0), lty=3,col=3)
-  lines(lowess(c((t_0+tdd):len_ger_data)-t_0, ger_data_phi_h*100,f=0.3),lty=2,col=2)
+  lines(lowess(c((t_0+tcd):len_ger_data)-t_0, ger_data_phi_h*100,f=0.3),lty=2,col=2)
+  
+  for (i in c(1:100)) 
+    lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
+  axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
+  mtext("Week number (2020)",side=3,line=2,las=0)
+  if (plot_out != 2) title("Situation COVID-19 in Germany",
+                           sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
+  if (plot_out > 1) dev.off()
+  
+  
+  if (plot_out == 2) png("Situation-7.png", width = 640, height = 480)
+  par(mar=c(5,6,7,5)+0.1)
+  
+  phi_c_plot <- phi_d / quantile(phi_d[25:45],probs=0.5)
+  
+  plot(c(t_0:len_ger_data)-t_0, phi_c_plot*100, 
+       ylim=c(80,130),
+       xlab=paste("Days after", rnames[t_0]),
+       ylab="Hidden Cases Cumulative (%)")
+  lines(c(-1e9,1e9), c(0,0), lty=3,col=3)
+  phi_c_plot[1:22] <- 1
+  lines(lowess(phi_c_plot*100,f=0.25),lty=2,col=2)
   
   for (i in c(1:100)) 
     lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
@@ -669,7 +724,7 @@ for (plot_out in c(2:0)) {
        type="l", 
        xlab=paste("Days after", rnames[t_0]), 
        ylab="Cases", 
-       ylim=c(0,1e5), 
+       ylim=c(0,3e5), 
        xlim=c(0,250), 
        lty=1, col=1)
   lines(sol$t, sol$u[,6], lty=2, col=2)
