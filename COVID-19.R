@@ -400,20 +400,20 @@ JuliaCall::julia_assign("data", data)
 JuliaCall::julia_eval("@everywhere t = $t")
 JuliaCall::julia_eval("@everywhere data = $data")
 JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:3, j in 1:length(t)]")
-JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-3, abstol=1e-6, maxiters = 1e5, LogLikeLoss(t,distributions), verbose=true); nothing")
+JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, abstol=1e-7, maxiters = 1e5, LogLikeLoss(t,distributions), verbose=true); nothing")
 
 
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.4),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.25),(49,51),(0.05,5)]")
-JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 1e3, NumDimensions = 10,
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(50,50.3),(0.15,0.25)]")
+JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 10,
     Workers = workers(),
     TraceMode = :compact,
     Method = :adaptive_de_rand_1_bin_radiuslimited)")
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-#p2 <- c(0.3236249, 11.6992487,  0.2552845, 21.8826199,  0.1848394, 50.7072263,  0.1882340)
+#p2 <- c( 0.3172448, 11.7027064,  0.2629927, 21.8930016,  0.1829785, 50.1546857,  0.1963130 )
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
