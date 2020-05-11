@@ -51,9 +51,25 @@ len_ger_data <- length(ger_data_confirmed)
 #View(data.frame(day=1:len_ger_data, confirmed=ger_data_confirmed, recovered=ger_data_recovered))
 
 
-ln_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed[1:len_ger_data]))
-ln_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered[1:len_ger_data]))
+#####################################################################################
+#
+# Constants
+#   
+#####################################################################################
 
+# confirmed to death (determined by overlapping the two curves)
+td <-10.5
+tcd <- trunc(td)
+# assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
+te = 5.1
+ti = 14 # determined by overlapping the two curves
+th = 8 
+thi = 10 
+thd = td - th 
+thii = 10
+
+
+# ln plots
 t_0 <- 40
 tc0_0 <- 15
 tc0_max <- 35
@@ -67,6 +83,20 @@ tc4_0 <- t_0+50
 tc4_max <- len_ger_data
 
 dt_r = 14
+
+# approx hidden cases
+phi_d <- ger_data_deaths[t_0:len_ger_data]/ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
+phi_d_median <- quantile(phi_d[22:43],probs=0.5)
+phi_c <- phi_d / phi_d_median
+phi_c[1:22] <- 1
+phi_c <- lowess(phi_c,f=0.4)$y
+phi_r <-c(1:ti, phi_c[1:(length(phi_c)-ti)])
+phi_r[1:ti] <- 1
+
+ln_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed[1:len_ger_data]))
+ln_data_confirmed$`ln_x`[t_0:len_ger_data] <- log(ger_data_confirmed[t_0:len_ger_data]*phi_c)
+ln_data_recovered <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_recovered[1:len_ger_data]))
+ln_data_recovered$`ln_x`[t_0:len_ger_data] <- log(ger_data_recovered[t_0:len_ger_data]*phi_r)
 
 ln_res_1a = lm(ln_x~t, ln_data_confirmed[tc0_0:tc0_max,])
 ln_res_2a = lm(ln_x~t, ln_data_confirmed[tc1_0:tc1_max,])
@@ -90,67 +120,15 @@ ln_res_3b
 ln_res_4b
 
 
-
-
-
-#####################################################################################
-#
-# Constants
-#   
-#####################################################################################
-
-# confirmed to death (determined by overlapping the two curves)
-td <-10.5
-tcd <- trunc(td)
-# assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
-te = 5.1
-ti = 13 # determined by overlapping the two curves
-th = 8 
-thi = 10 
-thd = td - th 
-thii = 10
-
-
 # assume k_raw from ln(x)-plot
 k_raw = ln_res_2a$coefficients[2]
 k_raw2 = ln_res_3a$coefficients[2]
-
-# correct k_raw by the influence of te, ti, th, thi and phi_h
-# x2'   = + k(t) x1(t) / n_max x2(t) - k(t - te) * x1 (t - te) / n_max * x2(t - te)
-# x3:6' = + k(t - te) * x1 (t - te) / n_max * x2(t - te) # x3:6 as cumulative infects --> x3:6' = k_raw * x3:6 && x1 / n_max = 1 && k(t) == const.
-#         + k * x1 / n_max * x2(t - te) = k_raw * x3:6(t) # xn(t0 + t) = xn(t0) * exp(k_raw * t) in exponential phase
-#       = + k * x2(t) * exp(-k_raw * te)
-# x2(t) = x3:6(t) * k_raw / (k * exp(-k_raw * te))
-# x2' = 
 
 k_raw
 f_k <- function(k) k *(1-exp(-k * te)) - k_raw
 k1 <- uniroot(f_k , c(0.01, 1))$root
 f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - k_raw2
 k2 <- uniroot(f_k2 , c(0.01, 1))$root
-
-
-# example from Kentaro Iwata and Chisato Miyakoshi
-# https://www.preprints.org/manuscript/202002.0179/v1
-# https://gist.github.com/skoba/abc760104be559881ab7269372bb03ea#file-covid19-py
-# ti = 10
-# R0 = 3
-# k_raw = log(R0 + 1)/te
-
-# dx/dt = k * x
-# 1/x * dx = k * dt
-# integrate
-# ln(x) - ln(x_0) = k * t
-# x / x_0 = exp(k * t)
-# x = x_0 exp(k * t)
-# x_0 = 1
-# R0 = exp(k * te) -1
-
-R0 = exp(k_raw* te) -1
-R0
-R0 = exp(k_raw*0.7 * te) -1
-R0  
-log(1+1)/te
 
 # assume median from 40:80 in germany (good)
 phi_d_1 <- as.numeric(quantile(
@@ -163,13 +141,6 @@ phi_d_2 <- as.numeric(quantile(
   subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = c(21:81)) /subset(csse_covid_19_time_series_confirmed, `Province/State` == "Hubei", select = c(10:70)),
   probs = 0.9
 ))
-
-phi_d <- ger_data_deaths[t_0:len_ger_data]/ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
-phi_c <- phi_d / quantile(phi_d[25:45],probs=0.5)
-phi_c[1:22] <- 1
-phi_c <- lowess(phi_c,f=0.4)$y
-phi_r <-c(1:ti, phi_c[1:(length(phi_c)-ti)])
-phi_r[1:ti] <- 1
 
 # assume phi_h from max phi_d_2 (Hubei / China)
 phi_h <- 0.14
@@ -375,9 +346,6 @@ S <-n_max - I - E - H - R - D
 data_df <- data.frame(C = C[t], D = D[t], R = R[t])
 data_sd <- abs(data.frame(C = lowess(t,C[t],f=0.1)$y - data_df$C, D = lowess(t,D[t],f=0.3)$y - data_df$D, R = lowess(t,R[t],f=0.3)$y - data_df$R))
 
-plot(data_sd$R+10)
-
-
 JuliaCall::julia_assign("u0", c(C[t_0], D[t_0], R[t_0], H[t_0], I[t_0], E[t_0], S[t_0]))
 JuliaCall::julia_assign("tspan", c(0,len_ger_data-t_0+1))
 JuliaCall::julia_assign("p", c(k1, tk_2, k2, tk_2+7, k2,50,k2))
@@ -406,14 +374,14 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(50,50.3),(0.15,0.25)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(50,51),(0.15,0.25)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 10,
     Workers = workers(),
     TraceMode = :compact,
     Method = :adaptive_de_rand_1_bin_radiuslimited)")
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-#p2 <- c( 0.3172448, 11.7027064,  0.2629927, 21.8930016,  0.1829785, 50.1546857,  0.1963130 )
+#p2 <- c(0.3228411, 11.6203028,  0.2542857, 21.9532061,  0.1846412, 50.9186659,  0.1837159)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
@@ -523,24 +491,30 @@ for (plot_out in c(2:0)) {
   par(mar=c(5,6,7,5)+0.1)
   plot(ger_data_confirmed, 
        type="l", 
-       col = 1, 
+       col = "dark gray", 
        lty = 1,
        xlab=paste("Days after", rnames[1]), 
-       ylab="Cases")
-  lines(ger_data_recovered , type="l", col = 2, lty = 2)
+       ylab="Cases",
+       ylim=c(0,max(ger_data_confirmed[t_0:len_ger_data] * phi_c)*1.1))
+  lines(c(ger_data_confirmed[1:(t_0-1)],ger_data_confirmed[t_0:len_ger_data] * phi_c) , type="l", col = "black", lty = 1)
+  lines(ger_data_recovered , type="l", col = "light green", lty = 2)
+  lines(c(ger_data_recovered[1:(t_0-1)],ger_data_recovered[t_0:len_ger_data] * phi_c) , type="l", col = "green", lty = 2)
+  lines(ger_data_deaths, type="l", col = "red", lty = 3)
+  
   for (i in c(0:100)) 
     lines(c(i*7-22,i*7-22), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
   mtext("Week number (2020)",side=3,line=2,las=0)
-  legend("topleft", legend <- c("Confirmed cases", "Recovered cases"), 
-         col=c(1,2),
+  legend("topleft", legend <- c("Confirmed and hidden cases","Confirmed cases (JHU CSSE)", "Recovered and hidden recovered cases", "Recovered cases (JHU CSSE)", "Death cases"), 
+         col=c("black","dark gray","green","light green","red"),
          bty="n",
          pch=c(-1,-1),
          lwd=1,
-         lty=c(1,2),
+         lty=c(1,1,2,2,3),
          cex = 0.8,
          x.intersp = 2.5,
          ncol=1)
+  box()
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()
@@ -579,6 +553,7 @@ for (plot_out in c(2:0)) {
          cex = 0.8,
          x.intersp = 2.5,
          ncol=1)
+  box()
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()
@@ -589,13 +564,30 @@ for (plot_out in c(2:0)) {
   R0_plot <- data.frame(t = c(tc0_0:(len_ger_data)), R0 = 0)
   for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- exp((lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] ) * te)
   R0_plot$t <- R0_plot$t - R0_plot$t[1] 
-  plot(R0_plot$t, R0_plot$R0, 
-       type = "p", 
+  plot(c(-1e9,1e9),c(1, 1),lty=3,col=3,
+       type = "l", 
        ylim=c(0,6),
+       xlim=c(t_0,len_ger_data-tc0_0),
        xlab=paste("Days after", rnames[tc0_0]),
        ylab="Basic Reproductive Number R0")
-  lines(lowess(R0_plot),lty=2,col=2)
-  lines(c(-1e9,1e9), c(1, 1),lty=3,col=3)
+
+  data <- data.frame(x=R0_plot$t, y=R0_plot$R0)
+  mean <- lowess(data,f=0.2)
+  sd <- data.frame(x=data$x,y=(mean$y - data$y)^2)
+  sd$y[2:(length(sd$x)-1)] <- (sd$y[1:(length(sd$x)-2)] + sd$y[2:(length(sd$x)-1)] + sd$y[3:(length(sd$x))])/2
+  sd$y[c(1,length(sd$x))]<- sd$y[c(1,length(sd$x))] *3/2
+  sd <- lowess(sd, f=0.15)
+  sd$y <- abs(sd$y)^0.5*qt(0.975,length(sd$y))
+  
+  polygon(c(mean$x,rev(mean$x)),c(mean$y-sd$y,rev(mean$y+sd$y)),lty=0,col="gray95")
+  lines(mean$x,mean$y-sd$y,lty=2)
+  lines(mean$x,mean$y+sd$y,lty=2)
+  
+  lines(c(-1e9,1e9), c(1,1),lty=3,col=3)
+  
+  points(data)
+  lines(mean,lty=2,col=2)
+  
   for (i in c(0:100)) 
     lines(c(i*7-22-tc0_0,i*7-22-tc0_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22-tc0_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
@@ -609,9 +601,11 @@ for (plot_out in c(2:0)) {
          cex = 0.8,
          x.intersp = 2.5,
          ncol=1)
+  box()
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()
+  
   
   
   if (plot_out == 2) png("Situation-4.png", width = 640, height = 480)
@@ -619,13 +613,30 @@ for (plot_out in c(2:0)) {
   R0_plot <- data.frame(t = c(tc0_0:(len_ger_data)), R0 = 0)
   for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] + 1/te
   R0_plot$t <- R0_plot$t - R0_plot$t[1] 
-  plot(R0_plot$t, R0_plot$R0, 
-       type = "p", 
+  plot(c(-1e9,1e9), c(1/te, 1/te), lty=3,col=3,
+       type = "l", 
        ylim=c(0,0.5),
+       xlim=c(t_0,len_ger_data-tc0_0),
        xlab=paste("Days after", rnames[tc0_0]),
        ylab=expression('Growth Rate '*(D^-1)))
-  lines(lowess(R0_plot),lty=2,col=2)
-  lines(c(0,length(R0_plot$R0)-1), c(1/te, 1/te),lty=3,col=3)
+  
+  data <- data.frame(x=R0_plot$t, y=R0_plot$R0)
+  mean <- lowess(data,f=0.2)
+  sd <- data.frame(x=data$x,y=(mean$y - data$y)^2)
+  sd$y[2:(length(sd$x)-1)] <- (sd$y[1:(length(sd$x)-2)] + sd$y[2:(length(sd$x)-1)] + sd$y[3:(length(sd$x))])/2
+  sd$y[c(1,length(sd$x))]<- sd$y[c(1,length(sd$x))] *3/2
+  sd <- lowess(sd, f=0.15)
+  sd$y <- abs(sd$y)^0.5*qt(0.975,length(sd$y))
+  
+  polygon(c(mean$x,rev(mean$x)),c(mean$y-sd$y,rev(mean$y+sd$y)),lty=0,col="gray95")
+  lines(mean$x,mean$y-sd$y,lty=2)
+  lines(mean$x,mean$y+sd$y,lty=2)
+  
+  lines(c(-1e9,1e9), c(1/te,1/te),lty=3,col=3)
+  
+  points(data)
+  lines(mean,lty=2,col=2)
+  
   for (i in c(0:100)) 
     lines(c(i*7-22-tc0_0,i*7-22-tc0_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22-tc0_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
@@ -639,10 +650,13 @@ for (plot_out in c(2:0)) {
          cex = 0.8,
          x.intersp = 2.5,
          ncol=1)
+  box()
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()
 
+  
+  
   if (plot_out == 2) png("Situation-5.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
 
@@ -654,38 +668,74 @@ for (plot_out in c(2:0)) {
   #plot(1:length(ger_data_deaths_day),ger_data_confirmed_day)
   #points((1:length(ger_data_deaths_day))-tcd,ger_data_deaths_day/0.043,col=2)
   
-  plot(c((t_0+tcd):len_ger_data)-t_0, ger_data_phi_d*100, 
+  plot(c(-1e9,1e9), c(phi_d_median,phi_d_median)*100,
+       lty=3,col=3,
+       type = "l", 
        ylim=c(2,8),
+       xlim=c((t_0+tcd),len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Death Cases (%)")
-  lines(lowess(c((t_0+tcd):len_ger_data)-t_0, ger_data_phi_d*100,f=0.3),lty=2,col=2)
+  data <- data.frame(x=c((t_0+tcd):len_ger_data)-t_0, y=ger_data_phi_d*100)
+  mean <- lowess(data,f=0.3)
+  sd <- lowess(data$x,(mean$y - data$y)^2, f=0.15)
+  sd$y <- abs(sd$y)^0.5*3/2
+  
+  polygon(c(mean$x,rev(mean$x)),c(mean$y-sd$y,rev(mean$y+sd$y)),lty=0,col="gray95")
+  lines(mean$x,mean$y-sd$y,lty=2)
+  lines(mean$x,mean$y+sd$y,lty=2)
+  
+  lines(c(-1e9,1e9), c(phi_d_median,phi_d_median)*100,lty=3,col=3)
+  
+  points(data)
+  lines(mean,lty=2,col=2)
+  
   for (i in c(1:100)) 
     lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
   mtext("Week number (2020)",side=3,line=2,las=0)
+  box()
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()
   
   
+  
+  
   if (plot_out == 2) png("Situation-6.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
   
-  ger_data_phi_h <- ger_data_phi_d / as.numeric(quantile(ger_data_phi_d[(22:38)-tcd],probs = 0.5)) - 1
-  ger_data_phi_h <- ger_data_phi_d / as.numeric(mean(ger_data_phi_d[(22:38)-tcd])) - 1
+  ger_data_phi_h <- ger_data_phi_d / phi_d_median 
 
-  
-  plot(c((t_0+tcd):len_ger_data)-t_0, ger_data_phi_h*100, 
-       #ylim=c(-100,100),
+  plot(c(-1e9,1e9), c(1,1)*100,
+       type="l",
+       lty=3,col=3,
+       ylim=c(0,250),
+       xlim=c((t_0+tcd),len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Hidden Cases Per Day (%)")
-  lines(c(-1e9,1e9), c(0,0), lty=3,col=3)
-  lines(lowess(c((t_0+tcd):len_ger_data)-t_0, ger_data_phi_h*100,f=0.3),lty=2,col=2)
+  
+  data <- data.frame(x=c((t_0+tcd):len_ger_data)-t_0, y=ger_data_phi_h*100)
+  mean <- lowess(data,f=0.3)
+  sd <- data.frame(x=data$x,y=(mean$y - data$y)^2)
+  sd$y[2:(length(sd$x)-1)] <- (sd$y[1:(length(sd$x)-2)] + sd$y[2:(length(sd$x)-1)] + sd$y[3:(length(sd$x))])/2
+  sd$y[c(1,length(sd$x))]<- sd$y[c(1,length(sd$x))] *3/2
+  sd <- lowess(sd, f=0.25)
+  sd$y <- abs(sd$y)^0.5*qt(0.975,length(sd$y))
+  
+  polygon(c(mean$x,rev(mean$x)),c(mean$y-sd$y,rev(mean$y+sd$y)),lty=0,col="gray95")
+  lines(mean$x,mean$y-sd$y,lty=2)
+  lines(mean$x,mean$y+sd$y,lty=2)
+  
+  lines(c(-1e9,1e9), c(1,1)*100,lty=3,col=3)
+  
+  points(data)
+  lines(mean,lty=2,col=2)
   
   for (i in c(1:100)) 
     lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
   mtext("Week number (2020)",side=3,line=2,las=0)
+  box()
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()
@@ -694,20 +744,41 @@ for (plot_out in c(2:0)) {
   if (plot_out == 2) png("Situation-7.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
   
-  phi_c_plot <- phi_d / quantile(phi_d[25:45],probs=0.5)
+  phi_c_plot <- phi_d / phi_d_median
   
-  plot(c(t_0:len_ger_data)-t_0, phi_c_plot*100, 
+  plot(c(-1e9,1e9), c(1,1)*100,
+       type="l",
+       lty=3,col=3,
        ylim=c(80,130),
+       xlim=c(t_0+tcd,len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Hidden Cases Cumulative (%)")
-  lines(c(-1e9,1e9), c(0,0), lty=3,col=3)
-  phi_c_plot[1:22] <- 1
-  lines(lowess(phi_c_plot*100,f=0.25),lty=2,col=2)
+  
+  data <- data.frame(x=c((t_0):len_ger_data)-t_0, y=phi_c_plot*100)
+  data <- data[1:length(data$x),]
+  mean <- lowess(data,f=0.3)
+  mean$y[1:22]<- mean$y[22]
+  sd <- data.frame(x=data$x,y=(mean$y - data$y)^2)
+  sd$y[2:(length(sd$x)-1)] <- (sd$y[1:(length(sd$x)-2)] + sd$y[2:(length(sd$x)-1)] + sd$y[3:(length(sd$x))])/2
+  sd$y[c(1,length(sd$x))]<- sd$y[c(1,length(sd$x))] *3/2
+  sd <- lowess(sd, f=0.25)
+  sd$y <- abs(sd$y)^0.5*qt(0.975,length(sd$y))
+  
+  polygon(c(mean$x,rev(mean$x)),c(mean$y-sd$y,rev(mean$y+sd$y)),lty=0,col="gray95")
+  lines(mean$x,mean$y-sd$y,lty=2)
+  lines(mean$x,mean$y+sd$y,lty=2)
+  
+  lines(c(-1e9,1e9), c(1,1)*100,lty=3,col=3)
+  
+  points(data)
+  mean$y[1:22]<-NA
+  lines(mean,lty=2,col=2)
   
   for (i in c(1:100)) 
     lines(c(i*7-22-t_0,i*7-22-t_0), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22-t_0, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
   mtext("Week number (2020)",side=3,line=2,las=0)
+  box()
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()

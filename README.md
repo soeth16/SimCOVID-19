@@ -13,13 +13,14 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 | Name                                                                                                            |         Value | Description                                | Source |
 |-----------------------------------------------------------------------------------------------------------------|--------------:|--------------------------------------------|--------|
-| ![$k(t)$](https://render.githubusercontent.com/render/math?math=%24k(t)%24)                                     | ~ 0.15 to 0.3 | growth rate                                |        |
+| ![$k(t)$](https://render.githubusercontent.com/render/math?math=%24k(t)%24)                                     | ~ 0.15 to 0.4 | growth rate                                |        |
 | ![$n_{max}$](https://render.githubusercontent.com/render/math?math=%24n_%7Bmax%7D%24)                           |      83019213 | max inahbitants                            |        |
 | ![$t_{e}$](https://render.githubusercontent.com/render/math?math=%24t_%7Be%7D%24)                               |           5.1 | exposed / incubation time                  |        |
-| ![$t_{i}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bi%7D%24)                               |            12 | time of a moderate  infection              |        |
+| ![$t_{i}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bi%7D%24)                               |            13 | time of a moderate  infection              |        |
 | ![$t_{h}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%7D%24)                               |             8 | time until hostspitalisation               |        |
-| ![$t_{h,i}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%2Ci%7D%24)                         |            14 | time for hostspitalisation with ARDS       |        |
-| ![$t_{h,d}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%2Cd%7D%24)                         |             2 | time until death                           |        |
+| ![$t_{h,i}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%2Ci%7D%24)                         |            10 | time for hostspitalisation with ARDS       |        |
+| ![$t_{h,ii}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%2Cii%7D%24)                       |            10 | time after ARDS                            |        |
+| ![$t_{h,d}$](https://render.githubusercontent.com/render/math?math=%24t_%7Bh%2Cd%7D%24)                         |           2.5 | time until death while ARDS                |        |
 | ![$n_{h,max}$](https://render.githubusercontent.com/render/math?math=%24n_%7Bh%2Cmax%7D%24)                     |         28031 | max intensive beds for treating ARDS       |        |
 | ![$\varphi_{h}$](https://render.githubusercontent.com/render/math?math=%24%5Cvarphi_%7Bh%7D%24)                 |          0.14 | propotion hostspitalisation with ARDS      |        |
 | ![$\varphi_{d}(u_h(t))$](https://render.githubusercontent.com/render/math?math=%24%5Cvarphi_%7Bd%7D(u_h(t))%24) |        ~ 0.05 | propotion deaths                           |        |
