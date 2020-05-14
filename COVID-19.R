@@ -66,7 +66,7 @@ ti = 14 # determined by overlapping the two curves
 th = 8 
 thi = 10 
 thd = td - th 
-thii = 10
+thii = 10 # == 4 weeks
 
 
 # ln plots
@@ -456,7 +456,7 @@ for (plot_out in c(2:0)) {
        ylim=c(0,max( phi_c*ger_data_confirmed[c(t_0:len_ger_data),1]/n_max*100)),
        col="dark gray",pch=1)
   points(c(t_0:len_ger_data)-t_0, ger_data_recovered[c(t_0:len_ger_data),1]/n_max*100,col="light green",pch=2)
-  points(c(t_0:len_ger_data)-t_0, phi_c*ger_data_confirmed[c(t_0:len_ger_data),1]/n_max*100,col=1,pch=2)
+  points(c(t_0:len_ger_data)-t_0, phi_c*ger_data_confirmed[c(t_0:len_ger_data),1]/n_max*100,col=1,pch=1)
   points(c(t_0:len_ger_data)-t_0, phi_r*ger_data_recovered[c(t_0:len_ger_data),1]/n_max*100,col=3,pch=2)
   points(c(t_0:len_ger_data)-t_0, ger_data_deaths[c(t_0:len_ger_data),1]/n_max*100,col=2,pch=3)
   
