@@ -29,39 +29,39 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 **Growth Rate:**
 
-![formula](https://render.githubusercontent.com/render/math?math=k(t)%20%3D%20%20%20%5Cbegin%7Bcases%7D%20%20%20%20%20k_%7Bi%2B1%7D%20%20%20%20%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2Cn%2B1%7D%20%5C%5C%20%20%20%20%20k_%7Bi%2B1%7D%20%20%20%20%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2Cn%7D%20%5Cwedge%20t%20%5Cleq%20t_%7Bk%2Cn%2B1%7D%20%5C%5C%20%20%20%20%20%5Ccdots%20%20%20%20%20%20%26%20%5Cquad%20%5C%5C%20%20%20%20%20k_%7B1%7D%20%20%20%20%20%20%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2C1%7D%20%5Cwedge%20t%20%5Cleq%20t_%7Bk%2C2%7D%20%20%20%5Cend%7Bcases%7D)
+![Growth Rate](https://render.githubusercontent.com/render/math?math=k(t)%20%3D%5Cbegin%7Bcases%7Dk_%7Bn%2B1%7D%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2Cn%2B1%7D%20%5C%5Ck_%7Bn%7D%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2Cn%7D%20%5Cwedge%20t%20%5Cleq%20t_%7Bk%2Cn%2B1%7D%20%5C%5C%5Ccdots%26%20%5Cquad%20%5C%5Ck_%7B1%7D%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20t%20%3E%20t_%7Bk%2C1%7D%20%5Cwedge%20t%20%5Cleq%20t_%7Bk%2C2%7D%20%5C%5C%20%5Cend%7Bcases%7D%20%5C%5C)
 
 **Deaths:**
 
-![formula](https://render.githubusercontent.com/render/math?math=%5Cvarphi_%7Bd%7D(u_h(t))%20%20%5Cbegin%7Bcases%7D%20%20%5Cvarphi_%7Bd%2Cmin%7D%20%5Ccfrac%20%7B1-u_h(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%2B%20%5Cvarphi_%7Bd%2Cmax%7D%20%5Ccfrac%20%7Bu_h(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20%5Ccfrac%20%7Bu_h(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%3C%201%20%5C%5C%20%20%5Cvarphi_%7Bd%2Cmax%7D%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20%5Ccfrac%20%7Bu_h(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%5Cgeq%201%20%5C%5C%20%20%5Cend%7Bcases%7D)
+![Deaths](https://render.githubusercontent.com/render/math?math=%5Cvarphi_%7Bd%7D(H(t))%20%3D%20%5Cbegin%7Bcases%7D%20%5Cvarphi_%7Bd%2Cmin%7D%20%5Ccfrac%20%7B1-H(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%2B%20%5Cvarphi_%7Bd%2Cmax%7D%20%5Ccfrac%20%7BH(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20%5Ccfrac%20%7BH(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%3C%201%20%5C%5C%20%5Cvarphi_%7Bd%2Cmax%7D%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20%5Ccfrac%20%7BH(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%5Cgeq%201%20%5C%5C%20%5Cend%7Bcases%7D)
 
 **Susceptibles:**
 
-![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_7(t)%7D%20%7Bdt%7D%20%3D%20-%20k(t)%20%5Ccfrac%7Bu_7(t)%7D%20%7Bn_%7Bmax%7D%7D%20u_7(t))
+![Susceptibles](https://render.githubusercontent.com/render/math?math=S'(t)%20%3D%20-%20k(t)%20%5Ccfrac%7BS(t)%7D%20%7Bn_%7Bmax%7D%7D%20S(t))
 
 **Exposed / Incubating:**
 
-![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_6(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t)%20%5Ccfrac%7Bu_7(t)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t)%20%20%20%20%20-%20k(t-t_e)%20%5Ccfrac%7Bu_7(t-t_e)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e))
+![Exposed](https://render.githubusercontent.com/render/math?math=E'(t)%20%3D%20-%20S'(t)%20%2B%20S'(t-t_e))
 
 **Infected:**
 
-![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_5(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t-t_e)%20%5Ccfrac%7Bu_7(t-t_e)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e)%20%20%20%20%20-%20k(t-t_e-t_i)%20%5Ccfrac%7Bu_7(t-t_e-t_i)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_i)%20(1-%5Cvarphi_%7Bh%7D)%20%20%20%20%20-%20k(t-t_e-t_h)%20%5Ccfrac%7Bu_7(t-t_e-t_h)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h)%20(%5Cvarphi_%7Bh%7D))
+![Infected](https://render.githubusercontent.com/render/math?math=I'(t)%20%3D%20-%20S'(t%20-%20t_%7Be%7D)%20%2B%20S'(t%20-%20t_%7Be%7D%20-%20t_%7Bi%7D)%20(1-%5Cvarphi_%7Bh%7D)%20'(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D)%20%5Cvarphi_%7Bh%7D%20'(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D)))%20'(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D%20-%20t_%7Bh%2Cii%7D)(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D%20-%20t_%7Bh%2Cii%7D))%20)
 
 **Hostspitalisation:**
 
-![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_4(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t-t_e-t_h)%20%5Ccfrac%7Bu_7(t-t_e-t_h)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h)%20(%5Cvarphi_%7Bh%7D)%20%20%20%20%20-%20k(t-t_e-t_h-t_%7Bh%2Ci%7D)%20%5Ccfrac%7Bu_7(t-t_e-t_h-t_%7Bh%2Ci%7D)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h-t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D-%5Cvarphi_%7Bd%7D(u_4(t-t_%7Bh%2Ci%7D%2Bt%7Bh%2Cd%7D)))%20%20%20%20%20-%20k(t-t_e-t_h-t_%7Bh%2Cd%7D)%20%5Ccfrac%7Bu_7(t-t_e-t_h-t_%7Bh%2Cd%7D)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h-t_%7Bh%2Cd%7D)%20%5Cvarphi_%7Bd%7D(u_4(t)))
+![Hostspitalisation](https://render.githubusercontent.com/render/math?math=H'(t)%20%3D%20-%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D)%20%20%5Cvarphi_%7Bh%7D%20%20%2B%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(%20t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D)))%20%2B%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%5Cvarphi_%7Bd%7D(H(t)))
 
 **Recovered:**
 
-![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_3(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t-t_e-t_i)%20%5Ccfrac%7Bu_7(t-t_e-t_i)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_i)%20(1-%5Cvarphi_%7Bh%7D)%20%20%20%20%20%2B%20k(t-t_e-t_h-t_%7Bh%2Ci%7D)%20%5Ccfrac%7Bu_7(t-t_e-t_h-t_%7Bh%2Ci%7D)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h-t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D-%5Cvarphi_%7Bd%7D(u_4(t-t_%7Bh%2Ci%7D%2Bt%7Bh%2Cd%7D))))
+![Recovered](https://render.githubusercontent.com/render/math?math=R'(t)%20%3D%20-%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bi%7D)%20%20(1-%5Cvarphi_%7Bh%7D)%20-%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D%20-%20t_%7Bh%2Cii%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(%20t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D%20-%20t_%7Bh%2Cii%7D))))
 
 **Deaths:**
 
-![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_2(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20k(t-t_e-t_h-t_%7Bh%2Cd%7D)%20%5Ccfrac%7Bu_7(t-t_e-t_h-t_%7Bh%2Cd%7D)%7D%20%7Bn_%7Bmax%7D%7D%20u_6(t-t_e-t_h-t_%7Bh%2Cd%7D)%20%5Cvarphi_%7Bd%7D(u_4(t)))
+![Deaths](https://render.githubusercontent.com/render/math?math=D'(t)%20%3D%20-%20S'(%20t%20-%20t_%7Be%7D)%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%20%5Cvarphi_%7Bd%7D(H(t))%20)
 
 **Confirmed:**
 
-![formula](https://render.githubusercontent.com/render/math?math=%5Ccfrac%7Bdu_1(t)%7D%20%7Bdt%7D%20%20%3D%20%20%20%20%20%2B%20%5Ccfrac%7Bdu_2(t)%7D%20%7Bdt%7D%20%20%20%20%20%2B%20%5Ccfrac%7Bdu_3(t)%7D%20%7Bdt%7D%20%20%20%20%20%2B%20%5Ccfrac%7Bdu_4(t)%7D%20%7Bdt%7D%20%20%20%20%20%2B%20%5Ccfrac%7Bdu_5(t)%7D%20%7Bdt%7D)
+![Confirmed](https://render.githubusercontent.com/render/math?math=C'(t)%20%3D%20%2B%20D'(t)%20%2B%20R'(t)%20%2B%20H'(t)%20%2B%20I'(t))
 
 ## Results
 

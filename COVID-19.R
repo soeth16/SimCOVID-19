@@ -234,7 +234,7 @@ JuliaCall::julia_eval("@everywhere function phi_d(u, p)
     #else
     #  phi_d_2
     #end
-  end")k
+  end")
 
 f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
 
@@ -1646,6 +1646,6 @@ for (plot_out in c(2:0)) {
 }
 
 system("git add *")
-system(paste("git commit -m \"Update Data ", format(Sys.Date(), "%m/%d/%Y %H:%M"),"\"", sep=""))
+system(paste("git commit -m \"Update Data ", format(Sys.time(), "%m/%d/%Y %H:%M"),"\"", sep=""))
 system("git push")
 
