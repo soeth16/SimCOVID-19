@@ -9,6 +9,8 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 ## Model
 
+![Model](https://www.draw.io/?lightbox=1&highlight=0000ff&edit=_blank&layers=1&nav=1#R7VjLdpswEP0aL9tjwFB32fiRpE172jptmqUMMlDLiAphm359R0YC8UhMHMfNycnGZobxSJp75yH3rNFqe85QHHymHiY9s%2B9te9a4Z5pm37bhS2iyXGMY%2FWGu8VnoSV2pmIV%2FsVT2pTYNPZxUDDmlhIdxVenSKMIur%2BgQY3RTNVtQUl01Rj5uKGYuIk3tTejxINcOzXel%2FgKHfqBWNpz3%2BZsVUsbyJEmAPLrRVNakZ40YpTx%2FWm1HmIjoqbjcXGY35GrpnH%2F8lvxBP84%2BXX%2F5%2BSZ3Nn3IT4ojMBzx47o2c9drRFIZL3lWnqkAMppGHhZO%2Bj3rLOArAo8GPP7GnGcScJRyCirKeEB9GiFyRWks7RY04tLMEDKOvA8CWJDnhLrLXDUNCZFrgCTthyAlnNFlgZ1wUAAhjAmaY3KG3KW%2F2%2BiIEsrgVUQjLFx5QAZ5lnJzk1Kb705adA20tEtoylx8j50l%2BY6Yj%2B%2Fz5%2BR2YrMaaSWM55iuMGcZGDBMEA%2FXVWYjmSB%2BYVeSAB4kDx7ACavBiVmauDjm4ZxAJt%2FND4HNJgg5nsVoF5cN1JQqZ%2Bpc8AlKEonkHqAfAdQaM46394ZWvrX6MtlluRtIcVOWDkPVg0ArG8ru6GAMXhP0CRPU6ZigqpntzdBM9c3cvnPCSk9faQjnKk3oYpHAxuokKhY8nFdOg1eTbUwToJHY%2BxQ%2BLyM3ncPuI7%2FJuICu5mmyP90bCTxFq5CIIF1gssY8dFEL%2FxAJ%2FQgEF0DGrJ1hsKTYmTV2Sul6x2hImVMVC6NaLIrKoFeLfku1GD5VtVAb0mC9jBYwVmm4fksRQxHginvFZPMK7R5oWxvBaaFtjmpjDCPqC2%2FIdq0hW84JO3JzEvqOXQqbF%2Bn0fKLeiGZXIDqPQSeN%2BnD%2FyNMyoWjRhZOz7JeI11tbibfF6ALCeFuRsnKs0Yecbcg1JyDdKv%2FwXLoQQqaDo%2BHaAlZthDhsmDHUTXrv4GK246zhaLfAaD9yflHJ69RoZNbokZ9J%2Fkq%2Fu9YcDeyqI7vOszwQDUcHTEsqtBr9LmjCkzjk0LwSCAeNXkbXPH7ZsP9n1zSa1bqBk44EUIbXi8hOWb3o7LsJqVJTKTRl3bmj1DxlodCLgnEHYKfJ%2F0GdD3WcO%2Bf%2FsOaoXkiOmP%2FNm9Fr%2B%2Blyl1ZY6%2FSznlX3qTeNruxrOKrT%2BGD2gVj%2Bf5ybl3%2FDW5N%2F)
+
 **Parameter:**
 
 | Name                                                                                                            |         Value | Description                                | Source |
