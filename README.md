@@ -47,7 +47,7 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 **Infected:**
 
-![Infected](https://render.githubusercontent.com/render/math?math=I%27(t)%20%3D%20-%20S%27(t%20-%20t_%7Be%7D)%20%2B%20S%27(t%20-%20t_%7Be%7D%20-%20t_%7Bi%7D)%20(1-%5Cvarphi_%7Bh%7D)%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D)%20%5Cvarphi_%7Bh%7D%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D)))%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D%20-%20t_%7Bh%2Cii%7D)(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D%20-%20t_%7Bh%2Cii%7D))%20)
+![Infected](https://render.githubusercontent.com/render/math?math=I%27(t)%20%3D%20-%20S%27(t%20-%20t_%7Be%7D)%20%2B%20S%27(t%20-%20t_%7Be%7D%20-%20t_%7Bi%7D)%20(1-%5Cvarphi_%7Bh%7D)%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D)%20%5Cvarphi_%7Bh%7D%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D)))%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D%20-%20t_%7Bh%2Cii%7D)(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D%20-%20t_%7Bh%2Cii%7D))%20))
 
 **Hostspitalisation:**
 
@@ -59,7 +59,7 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 **Deaths:**
 
-![Deaths](https://render.githubusercontent.com/render/math?math=D%27(t)%20%3D%20-%20S%27(%20t%20-%20t_%7Be%7D)%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%20%5Cvarphi_%7Bd%7D(H(t))%20)
+![Deaths](https://render.githubusercontent.com/render/math?math=D%27(t)%20%3D%20-%20S%27(%20t%20-%20t_%7Be%7D)%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%20%5Cvarphi_%7Bd%7D(H(t))%20))
 
 **Confirmed:**
 
