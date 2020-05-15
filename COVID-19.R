@@ -1646,6 +1646,6 @@ for (plot_out in c(2:0)) {
 }
 
 system("git add *")
-system(paste("git commit -m \"Update Data from", format(Sys.Date(), "%m/%d/%Y"),"\"", sep=""))
+system(paste("git commit -m \"Update Data ", format(Sys.Date(), "%m/%d/%Y %H:%M"),"\"", sep=""))
 system("git push")
 
