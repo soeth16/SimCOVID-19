@@ -39,31 +39,31 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 **Susceptibles:**
 
-![Susceptibles](https://render.githubusercontent.com/render/math?math=S'(t)%20%3D%20-%20k(t)%20%5Ccfrac%7BS(t)%7D%20%7Bn_%7Bmax%7D%7D%20S(t))
+![Susceptibles](https://render.githubusercontent.com/render/math?math=S%27(t)%20%3D%20-%20k(t)%20%5Ccfrac%7BS(t)%7D%20%7Bn_%7Bmax%7D%7D%20S(t))
 
 **Exposed / Incubating:**
 
-![Exposed](https://render.githubusercontent.com/render/math?math=E'(t)%20%3D%20-%20S'(t)%20%2B%20S'(t-t_e))
+![Exposed](https://render.githubusercontent.com/render/math?math=E%27(t)%20%3D%20-%20S%27(t)%20%2B%20S%27(t-t_e))
 
 **Infected:**
 
-![Infected](https://render.githubusercontent.com/render/math?math=I'(t)%20%3D%20-%20S'(t%20-%20t_%7Be%7D)%20%2B%20S'(t%20-%20t_%7Be%7D%20-%20t_%7Bi%7D)%20(1-%5Cvarphi_%7Bh%7D)%20'(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D)%20%5Cvarphi_%7Bh%7D%20'(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D)))%20'(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D%20-%20t_%7Bh%2Cii%7D)(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D%20-%20t_%7Bh%2Cii%7D))%20)
+![Infected](https://render.githubusercontent.com/render/math?math=I%27(t)%20%3D%20-%20S%27(t%20-%20t_%7Be%7D)%20%2B%20S%27(t%20-%20t_%7Be%7D%20-%20t_%7Bi%7D)%20(1-%5Cvarphi_%7Bh%7D)%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D)%20%5Cvarphi_%7Bh%7D%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D)))%20%27(t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D%20-%20t_%7Bh%2Cii%7D)(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D%20-%20t_%7Bh%2Cii%7D))%20)
 
 **Hostspitalisation:**
 
-![Hostspitalisation](https://render.githubusercontent.com/render/math?math=H'(t)%20%3D%20-%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D)%20%20%5Cvarphi_%7Bh%7D%20%20%2B%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(%20t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D)))%20%2B%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%5Cvarphi_%7Bd%7D(H(t)))
+![Hostspitalisation](https://render.githubusercontent.com/render/math?math=H%27(t)%20%3D%20-%20S%27(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D)%20%20%5Cvarphi_%7Bh%7D%20%20%2B%20S%27(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(%20t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D)))%20%2B%20S%27(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%5Cvarphi_%7Bd%7D(H(t)))
 
 **Recovered:**
 
-![Recovered](https://render.githubusercontent.com/render/math?math=R'(t)%20%3D%20-%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bi%7D)%20%20(1-%5Cvarphi_%7Bh%7D)%20-%20S'(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D%20-%20t_%7Bh%2Cii%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(%20t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D%20-%20t_%7Bh%2Cii%7D))))
+![Recovered](https://render.githubusercontent.com/render/math?math=R%27(t)%20%3D%20-%20S%27(%20t%20-%20t_%7Be%7D%20-%20t_%7Bi%7D)%20%20(1-%5Cvarphi_%7Bh%7D)%20-%20S%27(%20t%20-%20t_%7Be%7D%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Ci%7D%20-%20t_%7Bh%2Cii%7D)%20(%5Cvarphi_%7Bh%7D%20-%20%5Cvarphi_%7Bd%7D(H(%20t%20-%20t_%7Bh%2Ci%7D%20%2B%20t_%7Bh%2Cd%7D%20-%20t_%7Bh%2Cii%7D))))
 
 **Deaths:**
 
-![Deaths](https://render.githubusercontent.com/render/math?math=D'(t)%20%3D%20-%20S'(%20t%20-%20t_%7Be%7D)%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%20%5Cvarphi_%7Bd%7D(H(t))%20)
+![Deaths](https://render.githubusercontent.com/render/math?math=D%27(t)%20%3D%20-%20S%27(%20t%20-%20t_%7Be%7D)%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%20%5Cvarphi_%7Bd%7D(H(t))%20)
 
 **Confirmed:**
 
-![Confirmed](https://render.githubusercontent.com/render/math?math=C'(t)%20%3D%20%2B%20D'(t)%20%2B%20R'(t)%20%2B%20H'(t)%20%2B%20I'(t))
+![Confirmed](https://render.githubusercontent.com/render/math?math=C%27(t)%20%3D%20%2B%20D%27(t)%20%2B%20R%27(t)%20%2B%20H%27(t)%20%2B%20I%27(t))
 
 ## Results
 
