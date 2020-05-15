@@ -59,7 +59,7 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 **Deaths:**
 
-![Deaths](https://render.githubusercontent.com/render/math?math=D%27(t)%20%3D%20-%20S%27(%20t%20-%20t_%7Be%7D)%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%20%5Cvarphi_%7Bd%7D(H(t))%20))
+![Deaths](https://render.githubusercontent.com/render/math?math=D%27(t)%20%3D%20-%20S%27(%20t%20-%20t_%7Be%7D)%20-%20t_%7Bh%7D%20-%20t_%7Bh%2Cd%7D)%20%20%5Cvarphi_%7Bd%7D(H(t)))
 
 **Confirmed:**
 
