@@ -86,12 +86,17 @@ dt_r = 14
 
 # approx hidden cases
 phi_d <- ger_data_deaths[t_0:len_ger_data]/ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
-phi_d_median <- quantile(phi_d[22:43],probs=0.5)
+phi_d_median <- quantile(phi_d[23:45],probs=0.5)
 phi_c <- phi_d / phi_d_median
 phi_c[1:22] <- 1
-phi_c <- lowess(phi_c,f=0.4)$y
+plot(phi_c,col=1)
 phi_r <-c(1:ti, phi_c[1:(length(phi_c)-ti)])
 phi_r[1:ti] <- 1
+points(phi_r,col=2)
+phi_c <- lowess(1:length(phi_c),phi_c,f=0.3)$y
+phi_r <- lowess(1:length(phi_r),phi_r,f=0.3)$y
+lines(phi_c,col=1,lty=2)
+lines(phi_r,col=2,lty=2)
 
 ln_data_confirmed <- data.frame(t = 1:len_ger_data,ln_x=log(ger_data_confirmed[1:len_ger_data]))
 ln_data_confirmed$`ln_x`[t_0:len_ger_data] <- log(ger_data_confirmed[t_0:len_ger_data]*phi_c)
@@ -130,11 +135,8 @@ k1 <- uniroot(f_k , c(0.01, 1))$root
 f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - k_raw2
 k2 <- uniroot(f_k2 , c(0.01, 1))$root
 
-# assume median from 40:80 in germany (good)
-phi_d_1 <- as.numeric(quantile(
-  ger_data_deaths[51:61]/(ger_data_confirmed[40:50]), 
-  probs = 0.33
-))
+# assume median from the first three german lock down weeks (good)
+phi_d_1 <- phi_d_median
 
 # assume Hubei / China (bad)
 phi_d_2 <- as.numeric(quantile(
@@ -561,9 +563,13 @@ for (plot_out in c(2:0)) {
   
   if (plot_out == 2) png("Situation-3.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
-  R0_plot <- data.frame(t = c(tc0_0:(len_ger_data)), R0 = 0)
-  for (i in R0_plot$t) R0_plot$R0[i-R0_plot$t[1]+1] <- exp((lm(ln_x~t, ln_data_confirmed[(i-3):i,])$coefficients[2] ) * te)
-  R0_plot$t <- R0_plot$t - R0_plot$t[1] 
+  
+  R0_plot <- data.frame(t = c(tc0_0:(len_ger_data)), R0 = NA)
+  for (i in 1:nrow(R0_plot)) R0_plot$R0[i] <- sum(ger_data_confirmed[tc0_0+i-(1:3),]-ger_data_confirmed[tc0_0+i-(1:3)-1,])/sum(ger_data_confirmed[tc0_0+i-(1:3)-te,]-ger_data_confirmed[tc0_0+i-(1:3)-te-1,])
+  R0_plot$t <- R0_plot$t - R0_plot$t[1]
+  R0_plot$R0[R0_plot$R0==Inf] = 10
+  
+  
   plot(c(-1e9,1e9),c(1, 1),lty=3,col=3,
        type = "l", 
        ylim=c(0,6),
@@ -660,8 +666,8 @@ for (plot_out in c(2:0)) {
   if (plot_out == 2) png("Situation-5.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
 
-  ger_data_deaths_day <- lowess(ger_data_deaths[t_0:len_ger_data]-ger_data_deaths[(t_0-1):(len_ger_data-1)],f=0.15)$y
-  ger_data_confirmed_day <- lowess(ger_data_confirmed[t_0:len_ger_data]-ger_data_confirmed[(t_0-1):(len_ger_data-1)],f=0.15)$y
+  ger_data_deaths_day <- lowess(ger_data_deaths[t_0:len_ger_data]-ger_data_deaths[(t_0-1):(len_ger_data-1)],f=0.1)$y
+  ger_data_confirmed_day <- lowess(ger_data_confirmed[t_0:len_ger_data]-ger_data_confirmed[(t_0-1):(len_ger_data-1)],f=0.1)$y
   
   ger_data_phi_d <- ger_data_deaths_day[(tcd+1):length(ger_data_deaths_day)]/ger_data_confirmed_day[1:(length(ger_data_deaths_day)-tcd)]
   
@@ -749,7 +755,7 @@ for (plot_out in c(2:0)) {
   plot(c(-1e9,1e9), c(1,1)*100,
        type="l",
        lty=3,col=3,
-       ylim=c(80,130),
+       ylim=c(80,140),
        xlim=c(t_0+tcd,len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Hidden Cases Cumulative (%)")
