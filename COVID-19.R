@@ -383,7 +383,7 @@ JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11
     Method = :adaptive_de_rand_1_bin_radiuslimited)")
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-#p2 <- c(0.3228411, 11.6203028,  0.2542857, 21.9532061,  0.1846412, 50.9186659,  0.1837159)
+#p2 <- c(0.3234205, 11.6572564,  0.2527465, 21.8814726,  0.1866970, 50.9126124,  0.1717211)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
