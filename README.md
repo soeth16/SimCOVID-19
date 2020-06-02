@@ -75,9 +75,7 @@ The growths rate is determined by logarithmic fitting of the confirmed cases:
 
 ![Situation - logarithmic scale](Situation-2.png)
 
-Basic Reproductive Number R0 has been determined from growths rate and median incubation time:
-
-![formula](https://render.githubusercontent.com/render/math?math=R_0%20%3D%20e%5E%7Bk%20%20t_e%7D)
+Basic Reproductive Number R0 has been determined by the nowcast method:
 
 ![Situation - Basic Reproductive Number](Situation-3.png)
 
@@ -113,13 +111,13 @@ The predicted begin of a new phase is linked to a real event!
 
 ![Forecast ARDS](Forecast-ARDS-2-scenario-1.png)
 
-The day of health system crash is close to the timepiont the shutdown if an ![$R_0$](https://render.githubusercontent.com/render/math?math=%24R_0%24) of 1 after shutdown is assumed.
+The day of health system crash is close to the time point the shutdown if an ![$R_0$](https://render.githubusercontent.com/render/math?math=%24R_0%24) of 1 after shutdown is assumed.
 
 ![Forecast as Fraction](Forecast-ARDS-3.png)
 
 ![Forecast as Fraction](Forecast-ARDS-4.png)
 
-### Scenario 2 - End of lock down after day 50 without social distancing (worest case)
+### Scenario 2 - End of lock down after day 50 without social distancing (worst case)
 
 ![Forecast as Fraction](Forecast-2-scenario-2.png)
 
@@ -135,3 +133,4 @@ The day of health system crash is close to the timepiont the shutdown if an ![$R
 
 * <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Steckbrief.html>
 * <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/R-Wert-Erlaeuterung.pdf?__blob=publicationFile>
+* ...
