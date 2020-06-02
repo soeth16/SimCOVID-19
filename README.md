@@ -134,4 +134,4 @@ The day of health system crash is close to the timepiont the shutdown if an ![$R
 ## References
 
 * <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Steckbrief.html>
-* ...
+* <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/R-Wert-Erlaeuterung.pdf?__blob=publicationFile>
