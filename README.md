@@ -35,7 +35,7 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 **Deaths:**
 
-![Deaths](https://render.githubusercontent.com/render/math?math=\varphi_{d}(H(t))%20\begin{cases}%20\varphi_{d%2Cmin}%20\cfrac%20{1-H(t)}%20{n_{h%2Cmax}}%20%2B%20\varphi_{d%2Cmax}%20\cfrac%20{H(t)}%20{n_{h%2Cmax}}%20%20%26%20\quad%20\text{%20if%20}%20\cfrac%20{H(t)}%20{n_{h%2Cmax}}%20%3C%201%20\\%20\varphi_{d%2Cmax}%20%26%20\quad%20\text{%20if%20}%20\cfrac%20{H(t)}%20{n_{h%2Cmax}}%20\geq%201%20\\%20\end{cases})
+![Deaths](https://render.githubusercontent.com/render/math?math=%5Cvarphi_%7Bd%7D(H(t))%20%3D%20%20%20%5Cbegin%7Bcases%7D%20%20%20%20%20%5Cvarphi_%7Bd%2Cmin%7D%20%5Ccfrac%20%7B1-H(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%2B%20%5Cvarphi_%7Bd%2Cmax%7D%20%5Ccfrac%20%7BH(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20%5Ccfrac%20%7BH(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%3C%201%20%5C%5C%20%20%20%20%20%5Cvarphi_%7Bd%2Cmax%7D%20%26%20%5Cquad%20%5Ctext%7B%20if%20%7D%20%5Ccfrac%20%7BH(t)%7D%20%7Bn_%7Bh%2Cmax%7D%7D%20%5Cgeq%201%20%5C%5C%20%20%20%5Cend%7Bcases%7D)
 
 **Susceptibles:**
 
