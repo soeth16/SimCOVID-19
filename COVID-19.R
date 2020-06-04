@@ -401,7 +401,7 @@ JuliaCall::julia_eval("@everywhere saveat = $saveat")
 # graphical: 0
 # pdf: 1
 # png: 2
-#plot_out <- 0
+  #q  
 for (plot_out in c(2:0)) {
   
   if (plot_out == 1) pdf("Plots.pdf")
