@@ -133,4 +133,5 @@ The day of health system crash is close to the time point the shutdown if an ![$
 
 * <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Steckbrief.html>
 * <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/R-Wert-Erlaeuterung.pdf?__blob=publicationFile>
+* <https://www.recoverytrial.net/files/recovery_dexamethasone_statement_160620_v2final.pdf>
 * ...
