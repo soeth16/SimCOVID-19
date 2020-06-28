@@ -196,12 +196,14 @@ JuliaCall::julia_eval("@everywhere phi_d_1 = $phi_d_1")
 JuliaCall::julia_eval("@everywhere phi_d_2 = $phi_d_2")
 
 JuliaCall::julia_eval("@everywhere function k(p, t)
-    if (t >= p[6]) 
+    if (t >= p[10]) 
+      p[11]
+    elseif (t >= p[8] && t < p[10]) 
+      p[9]
+    elseif (t >= p[6] && t < p[8]) 
       p[7]
     elseif (t >= p[4] && t < p[6]) 
       p[5]
-    #if (t >= p[4]) 
-    #  p[5]
     elseif (t >= p[2] && t < p[4]) 
       p[3]
     elseif (t < p[2]) 
@@ -213,9 +215,11 @@ k <- function(p, t) {
   tmp <- 0
   for (tt in 1:length(t))
   {
-    if (t[tt] >= p[6]) tmp[tt] <- p[7]
-    else if (t[tt] >= p[4] && t[tt] < p[6]) tmp[tt] <- p[5]
-    else if (t[tt] >= p[2] && t[tt] < p[4]) tmp[tt] <- p[3]
+    if (t[tt] >= p[10]) tmp[tt] <- p[11]
+    else if (t[tt] >= p[8] && t[tt] < p[10]) tmp[tt] <- p[9]
+    else if (t[tt] >= p[6] && t[tt] < p[8])  tmp[tt] <- p[7]
+    else if (t[tt] >= p[4] && t[tt] < p[6])  tmp[tt] <- p[5]
+    else if (t[tt] >= p[2] && t[tt] < p[4])  tmp[tt] <- p[3]
     else if (t[tt] < p[2]) tmp[tt] <- p[1]
   }
   return (tmp)
@@ -376,14 +380,14 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(50,51),(0.15,0.25)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(34,36),(0.15,0.25),(50,51),(0.15,0.25),(100,135),(0.15,0.25)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 10,
     Workers = workers(),
     TraceMode = :compact,
     Method = :adaptive_de_rand_1_bin_radiuslimited)")
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-#p2 <- c(0.3234205, 11.6572564,  0.2527465, 21.8814726,  0.1866970, 50.9126124,  0.1717211)
+#p2 <- c(0.3350204, 11.6059574,  0.2388098, 21.8763918,  0.1869984, 35.4582759, 0.1900558, 50.2560324, 0.1711251, 80.1329527, 0.1797312)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
@@ -401,7 +405,7 @@ JuliaCall::julia_eval("@everywhere saveat = $saveat")
 # graphical: 0
 # pdf: 1
 # png: 2
-  #q  
+# plot_out <- 0 
 for (plot_out in c(2:0)) {
   
   if (plot_out == 1) pdf("Plots.pdf")
@@ -948,7 +952,7 @@ for (plot_out in c(2:0)) {
   #   
   #####################################################################################
   
-  JuliaCall::julia_assign("p", c(p2[1], 1000, p2[1], 1001, p2[1], 1002, p2[1]))
+  JuliaCall::julia_assign("p", c(p2[1], 1000, p2[1], 1001, p2[1], 1001, p2[1], 1001, p2[1], 1002, p2[1]))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
   JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
   sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
@@ -1106,7 +1110,7 @@ for (plot_out in c(2:0)) {
   #   
   #####################################################################################
   
-  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], 50, p2[1]))
+  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], p2[6], p2[7], 50, p2[1], 80, p2[1]))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
   JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
   sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
@@ -1263,7 +1267,7 @@ for (plot_out in c(2:0)) {
   #   
   #####################################################################################
   
-  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], 50, p2[3]))
+  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], p2[6], p2[7], 50, p2[3], 80, p2[3]))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
   JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
   sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
@@ -1420,7 +1424,7 @@ for (plot_out in c(2:0)) {
   #   
   #####################################################################################
   
-  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[3], p2[1], p2[3], p2[1]))
+  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1]))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
   JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-9, abstol=1e-12, maxiters = 10000, saveat=saveat); nothing")
   sol1 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
@@ -1452,7 +1456,7 @@ for (plot_out in c(2:0)) {
     f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
     k2 <- uniroot(f_k2 , c(0.01, 1))$root
     
-    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2)
+    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2)
     JuliaCall::julia_assign("p", p_var)
     JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
     JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
@@ -1523,7 +1527,7 @@ for (plot_out in c(2:0)) {
     f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
     k2 <- uniroot(f_k2 , c(0.01, 1))$root
     
-    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2)
+    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2)
     JuliaCall::julia_assign("p", p_var)
     JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
     JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-9, abstol=1e-12, maxiters = 10000, saveat=saveat); nothing")
@@ -1598,7 +1602,7 @@ for (plot_out in c(2:0)) {
     k2 <- uniroot(f_k2 , c(0.01, 1))$root
     
     
-    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2)
+    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2)
     JuliaCall::julia_assign("p", p_var)
     JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
     JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-9, abstol=1e-12, maxiters = 10000, saveat=saveat); nothing")
