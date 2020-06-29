@@ -137,6 +137,7 @@ k2 <- uniroot(f_k2 , c(0.01, 1))$root
 
 # assume median from the first three german lock down weeks (good)
 phi_d_1 <- phi_d_median
+phi_d_1 <- phi_d_median
 
 # assume Hubei / China (bad)
 phi_d_2 <- as.numeric(quantile(
@@ -196,7 +197,9 @@ JuliaCall::julia_eval("@everywhere phi_d_1 = $phi_d_1")
 JuliaCall::julia_eval("@everywhere phi_d_2 = $phi_d_2")
 
 JuliaCall::julia_eval("@everywhere function k(p, t)
-    if (t >= p[10]) 
+    if (t >= p[12]) 
+      p[13]
+    elseif (t >= p[10] && t < p[12]) 
       p[11]
     elseif (t >= p[8] && t < p[10]) 
       p[9]
@@ -215,7 +218,8 @@ k <- function(p, t) {
   tmp <- 0
   for (tt in 1:length(t))
   {
-    if (t[tt] >= p[10]) tmp[tt] <- p[11]
+    if (t[tt] >= p[12]) tmp[tt] <- p[13]
+    else if (t[tt] >= p[10] && t[tt] < p[12]) tmp[tt] <- p[11]
     else if (t[tt] >= p[8] && t[tt] < p[10]) tmp[tt] <- p[9]
     else if (t[tt] >= p[6] && t[tt] < p[8])  tmp[tt] <- p[7]
     else if (t[tt] >= p[4] && t[tt] < p[6])  tmp[tt] <- p[5]
@@ -228,18 +232,18 @@ k <- function(p, t) {
 
 JuliaCall::julia_eval("@everywhere function phi_d(u, p)
     # phi_d for distributed hospital usage
-    #if (u > n_h_max) 
-    #  phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
-    #else 
-    #  phi_d_1
-    #end
+    if (u > n_h_max) 
+      phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
+    else 
+      phi_d_1
+    end
     
     # phi_d for hot spots without distribution
-    if (u / n_h_max < 1) 
-      phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max
-    else
-      phi_d_2
-    end
+    #if (u / n_h_max < 1) 
+    #  phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max
+    #else
+    #  phi_d_2
+    #end
   end")
 
 f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
@@ -380,17 +384,21 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(34,36),(0.15,0.25),(50,51),(0.15,0.25),(100,135),(0.15,0.25)]")
-JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 10,
-    Workers = workers(),
-    TraceMode = :compact,
-    Method = :adaptive_de_rand_1_bin_radiuslimited)")
+#JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(30,45),(0.15,0.25),(50,51),(0.15,0.25),(55,95),(0.15,0.25),(100,110),(0.15,0.25)]")
+#JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 10,
+#    Workers = workers(),
+#    TraceMode = :compact,
+#    Method = :adaptive_de_rand_1_bin_radiuslimited)")
 
-p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-#p2 <- c(0.3350204, 11.6059574,  0.2388098, 21.8763918,  0.1869984, 35.4582759, 0.1900558, 50.2560324, 0.1711251, 80.1329527, 0.1797312)
+#p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
+p2 <- c(0.3337346, 11.7597385, 0.2415940, 21.9553612, 0.1869820, 40.0121427, 0.1868671, 50.0685125, 0.1730836, 90.1590638, 0.1881056, 103.1097530, 0.1827900)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
+rnames[p2[6]+t_0]
+rnames[p2[8]+t_0]
+rnames[p2[10]+t_0]
+rnames[p2[12]+t_0]
 
 JuliaCall::julia_assign("saveat", c(0:1000/1000*250))
 JuliaCall::julia_assign("tspan", c(0,250))
