@@ -384,7 +384,7 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(30,45),(0.15,0.25),(50,54),(0.15,0.25),(55,95),(0.15,0.25),(100,110),(0.15,0.25)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(30,45),(0.15,0.25),(52,54),(0.15,0.25),(60,65),(0.15,0.25),(105,110),(0.15,0.25)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
