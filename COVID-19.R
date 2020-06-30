@@ -87,6 +87,7 @@ dt_r = 14
 # approx hidden cases
 phi_d <- ger_data_deaths[t_0:len_ger_data]/ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
 phi_d_median <- quantile(phi_d[23:45],probs=0.5)
+#phi_d_median <- mean(phi_d[23:45])
 phi_c <- phi_d / phi_d_median
 phi_c[1:22] <- 1
 plot(phi_c,col=1)
@@ -369,9 +370,9 @@ JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
 data <- array(dim=c(3,length(t),1000))
 for (j in 1:length(t))
 {
-  data[1,j,] <- rnorm(1000,data_df[j,1], data_sd[j,1]+10)
-  data[2,j,] <- rnorm(1000,data_df[j,2], data_sd[j,2]+10)
-  data[3,j,] <- rnorm(1000,data_df[j,3], data_sd[j,3]+10)
+  data[1,j,] <- rnorm(1000,data_df[j,1], data_sd[j,1]+1)
+  data[2,j,] <- rnorm(1000,data_df[j,2], data_sd[j,2]+1)
+  data[3,j,] <- rnorm(1000,data_df[j,3], data_sd[j,3]+1)
 }
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
@@ -384,14 +385,14 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-#JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(30,45),(0.15,0.25),(50,51),(0.15,0.25),(55,95),(0.15,0.25),(100,110),(0.15,0.25)]")
-#JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 10,
-#    Workers = workers(),
-#    TraceMode = :compact,
-#    Method = :adaptive_de_rand_1_bin_radiuslimited)")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(30,45),(0.15,0.25),(50,51),(0.15,0.25),(55,95),(0.15,0.25),(100,110),(0.15,0.25)]")
+JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
+    Workers = workers(),
+    TraceMode = :compact,
+    Method = :adaptive_de_rand_1_bin_radiuslimited)")
 
-#p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-p2 <- c(0.3337346, 11.7597385, 0.2415940, 21.9553612, 0.1869820, 40.0121427, 0.1868671, 50.0685125, 0.1730836, 90.1590638, 0.1881056, 103.1097530, 0.1827900)
+p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
+#p2 <- c(0.3337346, 11.7597385, 0.2415940, 21.9553612, 0.1869820, 40.0121427, 0.1768671, 50.0685125, 0.1730836, 90.1590638, 0.1881056, 103.1097530, 0.1827900)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
