@@ -91,11 +91,15 @@ Hidden cases are calculated by the amount of death casses per day.
 
 The predicted begin of a new phase is linked to a real event!
 
-|   Date   |         Event         |        Phase        |       Estimate       |
-|----------|-----------------------|---------------------|----------------------|
-| 03/01/20 | begin of simulation   | uncontrolled growth |                    0 |
-| 03/12/20 | who declares pandemic | social distancing   | 11.713200 (03/12/20) |
-| 03/22/20 | contact restriction   | shutdown            | 21.946100 (03/22/20) |
+|   date   |                   event                |        phase        |     estimated date     | estimated growth rate |
+|----------|----------------------------------------|---------------------|------------------------|-----------------------|
+| 03/01/20 | begin of simulation                    | uncontrolled growth |                      0 |             0.3165994 |
+| 03/12/20 | who declares pandemic                  | social distancing   |  11.7403526 (03/12/20) |             0.2604021 |
+| 03/22/20 | contact restriction                    | shutdown            |  21.9828423 (03/22/20) |             0.1865795 |
+| 04/03/20 | 37 mio masks arrived in Germany        |                     |  36.7995045 (04/06/20) |             0.1781261 |
+| 04/22/20 | mask requirement in all Federal states |                     |  50.0007786 (04/20/20) |             0.1765100 |
+| 05/30/20 | End of shutdown                        | re open             |  61.8112355 (05/01/20) |             0.1733849 |
+| 06/18/20 | Endemic outbreak in Gütersloh          |                     | 107.6686829 (06/16/20) |             0.1827476 |
 
 ### Forecast (250 Days)
 
