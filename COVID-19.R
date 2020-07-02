@@ -232,18 +232,18 @@ k <- function(p, t) {
 
 JuliaCall::julia_eval("@everywhere function phi_d(u, p)
     # phi_d for distributed hospital usage
-    if (u > n_h_max) 
-      phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
-    else 
-      phi_d_1
-    end
+    #if (u > n_h_max) 
+    #  phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
+    #else 
+    #  phi_d_1
+    #end
     
     # phi_d for hot spots without distribution
-    #if (u / n_h_max < 1) 
-    #  phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max
-    #else
-    #  phi_d_2
-    #end
+    if (u / n_h_max < 1) 
+      phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max
+    else
+      phi_d_2
+    end
   end")
 
 f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
