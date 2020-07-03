@@ -99,7 +99,7 @@ The predicted begin of a new phase is linked to a real event!
 | 04/03/20 | 37 mio masks arrived in Germany        |                     |  36.7995045 (04/06/20) |             0.1781261 |
 | 04/22/20 | mask requirement in all federal states |                     |  50.0007786 (04/20/20) |             0.1765100 |
 | 05/30/20 | end of shutdown                        | re open             |  61.8112355 (06/01/20) |             0.1733849 |
-| 06/18/20 | endemic outbreak in Gütersloh          |                     | 107.6686829 (06/16/20) |             0.1827476 |
+| 06/18/20 | endemic outbreak in Gütersloh          |                     | 103.3513184 (06/12/20) |             0.1919711 |
 
 ### Forecast (250 Days)
 

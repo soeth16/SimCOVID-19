@@ -384,7 +384,7 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(35,40),(0.15,0.25),(52,54),(0.15,0.25),(60,65),(0.15,0.25),(95,105),(0.15,0.25)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(35,37),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(101,105),(0.15,0.2)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
@@ -417,8 +417,8 @@ JuliaCall::julia_eval("@everywhere saveat = $saveat")
 # graphical: 0
 # pdf: 1
 # png: 2
- plot_out <- 0 
-#for (plot_out in c(2:0)) {
+# plot_out <- 0 
+for (plot_out in c(2:0)) {
   
   if (plot_out == 1) pdf("Plots.pdf")
   
@@ -1665,7 +1665,7 @@ JuliaCall::julia_eval("@everywhere saveat = $saveat")
   
   # the end 
   if (plot_out == 1) dev.off()
-#}
+}
 
 system("git add *")
 system(paste("git commit -m \"Update Data ", format(Sys.time(), "%m/%d/%Y %H:%M"),"\"", sep=""))
