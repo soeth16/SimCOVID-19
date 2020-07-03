@@ -232,18 +232,18 @@ k <- function(p, t) {
 
 JuliaCall::julia_eval("@everywhere function phi_d(u, p)
     # phi_d for distributed hospital usage
-    #if (u > n_h_max) 
-    #  phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
-    #else 
-    #  phi_d_1
-    #end
+    if (u > n_h_max) 
+      phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
+    else 
+      phi_d_1
+    end
     
     # phi_d for hot spots without distribution
-    if (u / n_h_max < 1) 
-      phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max
-    else
-      phi_d_2
-    end
+    #if (u / n_h_max < 1) 
+    #  phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max
+    #else
+    #  phi_d_2
+    #end
   end")
 
 f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
@@ -384,7 +384,7 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(30,45),(0.15,0.25),(52,54),(0.15,0.25),(60,65),(0.15,0.25),(100,110),(0.15,0.25)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(35,40),(0.15,0.25),(52,54),(0.15,0.25),(60,65),(0.15,0.25),(95,105),(0.15,0.25)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
@@ -417,8 +417,8 @@ JuliaCall::julia_eval("@everywhere saveat = $saveat")
 # graphical: 0
 # pdf: 1
 # png: 2
-# plot_out <- 0 
-for (plot_out in c(2:0)) {
+ plot_out <- 0 
+#for (plot_out in c(2:0)) {
   
   if (plot_out == 1) pdf("Plots.pdf")
   
@@ -1665,7 +1665,7 @@ for (plot_out in c(2:0)) {
   
   # the end 
   if (plot_out == 1) dev.off()
-}
+#}
 
 system("git add *")
 system(paste("git commit -m \"Update Data ", format(Sys.time(), "%m/%d/%Y %H:%M"),"\"", sep=""))
