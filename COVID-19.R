@@ -384,7 +384,7 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(35,37),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(101,105),(0.15,0.2)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(101,105),(0.15,0.2),(106,120),(0.15,0.2)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
@@ -395,7 +395,7 @@ JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11
 
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-#p2 <- c(0.3165994, 11.7403526, 0.2604021, 21.9828423, 0.1865795, 36.7995045, 0.1781261, 50.0007786, 0.1765100, 61.8112355, 0.1733849, 107.6686829, 0.1827476)
+#p2 <- c(0.3003057, 11.6507903, 0.2818724, 21.8597928, 0.1806365, 53.7949697, 0.1863497, 61.2062883, 0.1691815, 101.7158569, 0.1992506, 114.5066477, 0.1647673)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]

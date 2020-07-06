@@ -93,13 +93,13 @@ The predicted begin of a new phase is linked to a real event!
 
 |   date   |                   event                |        phase        |     estimated date     | estimated growth rate |
 |----------|----------------------------------------|---------------------|------------------------|-----------------------|
-| 03/01/20 | begin of simulation                    | uncontrolled growth |                      0 |             0.3165994 |
-| 03/12/20 | who declares pandemic                  | social distancing   |  11.7403526 (03/12/20) |             0.2604021 |
-| 03/22/20 | contact restriction                    | shutdown            |  21.9828423 (03/22/20) |             0.1865795 |
-| 04/03/20 | 37 mio masks arrived in Germany        |                     |  36.7995045 (04/06/20) |             0.1781261 |
-| 04/22/20 | mask requirement in all federal states |                     |  50.0007786 (04/20/20) |             0.1765100 |
-| 05/30/20 | end of shutdown                        | re open             |  61.8112355 (06/01/20) |             0.1733849 |
-| 06/18/20 | endemic outbreak in Gütersloh          |                     | 103.3513184 (06/12/20) |             0.1919711 |
+| 03/01/20 | begin of simulation                    | uncontrolled growth |                      0 |             0.3003057 |
+| 03/12/20 | who declares pandemic                  | social distancing   |  11.6507903 (03/12/20) |             0.2818724 |
+| 03/22/20 | contact restriction                    | shutdown            |  21.8597928 (03/22/20) |             0.1863497 |
+| 04/22/20 | mask requirement in all federal states |                     |  53.7949697 (04/23/20) |             0.1765100 |
+| 05/30/20 | end of shutdown                        | re open             |  61.2062883 (05/01/20) |             0.1691815 |
+| 06/18/20 | endemic outbreak in Gütersloh          | begin               | 101.7158569 (06/10/20) |             0.1992506 |
+|          |                                        | end                 | 114.5066477 (06/23/20) |             0.1647673 |
 
 ### Forecast (250 Days)
 
