@@ -384,7 +384,7 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(101,105),(0.15,0.2),(106,120),(0.15,0.2)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(101,104),(0.15,0.2),(114,126),(0.15,0.2)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
@@ -690,10 +690,10 @@ for (plot_out in c(2:0)) {
   #plot(1:length(ger_data_deaths_day),ger_data_confirmed_day)
   #points((1:length(ger_data_deaths_day))-tcd,ger_data_deaths_day/0.043,col=2)
   
-  plot(c(-1e9,1e9), c(phi_d_median,phi_d_median)*100,
+  plot(c(-1e9,107,107,1e9), c(phi_d_median,phi_d_median,phi_d_median/1.17,phi_d_median/1.17)*100,
        lty=3,col=3,
        type = "l", 
-       ylim=c(2,8),
+       ylim=c(1,8),
        xlim=c((t_0+tcd),len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Death Cases (%)")
@@ -706,7 +706,7 @@ for (plot_out in c(2:0)) {
   lines(mean$x,mean$y-sd$y,lty=2)
   lines(mean$x,mean$y+sd$y,lty=2)
   
-  lines(c(-1e9,1e9), c(phi_d_median,phi_d_median)*100,lty=3,col=3)
+  lines(c(-1e9,107,107,1e9), c(phi_d_median,phi_d_median,phi_d_median/1.17,phi_d_median/1.17)*100,lty=3,col=3)
   
   points(data)
   lines(mean,lty=2,col=2)
@@ -726,6 +726,7 @@ for (plot_out in c(2:0)) {
   if (plot_out == 2) png("Situation-6.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
   
+  ger_data_phi_d[107:length(ger_data_phi_d)] <- ger_data_phi_d[107:length(ger_data_phi_d)] * 1.17
   ger_data_phi_h <- ger_data_phi_d / phi_d_median 
 
   plot(c(-1e9,1e9), c(1,1)*100,
