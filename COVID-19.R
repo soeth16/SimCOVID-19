@@ -85,7 +85,12 @@ tc4_max <- len_ger_data
 dt_r = 14
 
 # approx hidden cases
-phi_d <- ger_data_deaths[t_0:len_ger_data]/ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
+ger_data_deaths_2 <- ger_data_deaths[t_0:len_ger_data]
+ger_data_confirmed_2 <- ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
+
+ger_data_deaths_2[107:length(ger_data_deaths_2)] <- ger_data_deaths_2[107:length(ger_data_deaths_2)]+(ger_data_deaths_2[107:length(ger_data_deaths_2)]-ger_data_deaths_2[107]) * 0.5384615
+
+phi_d <- ger_data_deaths_2 / ger_data_confirmed_2
 #phi_d_median <- quantile(phi_d[23:45],probs=0.5)
 phi_d_median <- mean(phi_d[23:45])
 phi_c <- phi_d / phi_d_median
@@ -726,7 +731,6 @@ for (plot_out in c(2:0)) {
   if (plot_out == 2) png("Situation-6.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
   
-  ger_data_phi_d[107:length(ger_data_phi_d)] <- ger_data_phi_d[107:length(ger_data_phi_d)] * 1.17
   ger_data_phi_h <- ger_data_phi_d / phi_d_median 
 
   plot(c(-1e9,1e9), c(1,1)*100,
