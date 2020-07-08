@@ -14,7 +14,7 @@ library(JuliaCall)
 #JuliaCall::julia_install_package_if_needed("Distributions")
 #JuliaCall::julia_install_package_if_needed("BlackBoxOptim")
 JuliaCall::julia_library("Distributed")
-JuliaCall::julia_eval("addprocs(8 - nprocs(), topology=:all_to_all)")
+JuliaCall::julia_eval("addprocs(2 - nprocs(), topology=:all_to_all)")
 JuliaCall::julia_library("DifferentialEquations")
 JuliaCall::julia_library("DiffEqParamEstim")
 JuliaCall::julia_library("Optim")
@@ -235,19 +235,25 @@ k <- function(p, t) {
 }
 
 
-JuliaCall::julia_eval("@everywhere function phi_d(u, p)
+JuliaCall::julia_eval("@everywhere function phi_d(u, p, t)
     # phi_d for distributed hospital usage
+    if (t > 107)
+      phi_d_t = 0.65
+    else
+      phi_d_t = 1
+    end
+    
     if (u > n_h_max) 
-      phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u
+      (phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u) * phi_d_t
     else 
-      phi_d_1
+      phi_d_1 * phi_d_t
     end
     
     # phi_d for hot spots without distribution
     #if (u / n_h_max < 1) 
-    #  phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max
+    #  (phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max) * phi_d_t
     #else
-    #  phi_d_2
+    #  phi_d_2 * phi_d_t
     #end
   end")
 
@@ -269,26 +275,26 @@ f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
       -h(p, t - te, Val{1}; idxs = 7)
       +h(p, t - te - ti, Val{1}; idxs = 7) * (1-phi_h)
       +h(p, t - te - th, Val{1}; idxs = 7) * phi_h
-      -h(p, t - te - th - thi, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p))
-      +h(p, t - te - th - thi - thii, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p))
+      -h(p, t - te - th - thi, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p, t - thi + thd))
+      +h(p, t - te - th - thi - thii, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p, t - thi + thd - thii))
     )
 
     # Hospitalization 
     du[4] = (
       - h(p, t - te - th, Val{1}; idxs = 7) *  phi_h 
-      + h(p, t - te - th - thi, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p))
-      + h(p, t - te - th - thd, Val{1}; idxs = 7) * phi_d(u[4], p)
+      + h(p, t - te - th - thi, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p, t - thi + thd))
+      + h(p, t - te - th - thd, Val{1}; idxs = 7) * phi_d(u[4], p, t)
     )
     
     # Recovered
     du[3] = ( 
       - h(p, t - te - ti, Val{1}; idxs = 7) *  (1-phi_h) 
-      - h(p, t - te - th - thi - thii, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p))
+      - h(p, t - te - th - thi - thii, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p, t - thi + thd - thii))
     )
     
     # Deaths
     du[2] = ( 
-      - h(p, t - te - th - thd, Val{1}; idxs = 7) *  phi_d(u[4], p)
+      - h(p, t - te - th - thd, Val{1}; idxs = 7) *  phi_d(u[4], p, t)
     )
     
     # Confirmed
@@ -388,14 +394,11 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(101,104),(0.15,0.2),(114,126),(0.15,0.2)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(101,104),(0.15,0.2),(114,116),(0.15,0.2)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
     Method = :adaptive_de_rand_1_bin_radiuslimited)")
-
-
 
 
 
@@ -695,7 +698,7 @@ for (plot_out in c(2:0)) {
   #plot(1:length(ger_data_deaths_day),ger_data_confirmed_day)
   #points((1:length(ger_data_deaths_day))-tcd,ger_data_deaths_day/0.043,col=2)
   
-  plot(c(-1e9,107,107,1e9), c(phi_d_median,phi_d_median,phi_d_median/1.17,phi_d_median/1.17)*100,
+  plot(c(-1e9,107,107,1e9), c(phi_d_median,phi_d_median,phi_d_median*0.65,phi_d_median*0.65)*100,
        lty=3,col=3,
        type = "l", 
        ylim=c(1,8),
@@ -711,7 +714,7 @@ for (plot_out in c(2:0)) {
   lines(mean$x,mean$y-sd$y,lty=2)
   lines(mean$x,mean$y+sd$y,lty=2)
   
-  lines(c(-1e9,107,107,1e9), c(phi_d_median,phi_d_median,phi_d_median/1.17,phi_d_median/1.17)*100,lty=3,col=3)
+  lines(c(-1e9,107,107,1e9), c(phi_d_median,phi_d_median,phi_d_median*0.65,phi_d_median*0.65)*100,lty=3,col=3)
   
   points(data)
   lines(mean,lty=2,col=2)
@@ -731,7 +734,10 @@ for (plot_out in c(2:0)) {
   if (plot_out == 2) png("Situation-6.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
   
-  ger_data_phi_h <- ger_data_phi_d / phi_d_median 
+  ger_data_phi_d2 <- ger_data_phi_d
+  ger_data_phi_d2[107:length(ger_data_phi_d2)] <- ger_data_phi_d2[107:length(ger_data_phi_d2)]/0.65
+  
+  ger_data_phi_h <- ger_data_phi_d2 / phi_d_median 
 
   plot(c(-1e9,1e9), c(1,1)*100,
        type="l",
