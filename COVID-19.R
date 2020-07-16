@@ -67,7 +67,8 @@ th = 8
 thi = 10 
 thd = td - th 
 thii = 10 # == 4 weeks
-
+# introduction of dexamethasone
+tm = 107 + 7
 
 # ln plots
 t_0 <- 40
@@ -88,16 +89,17 @@ dt_r = 14
 ger_data_deaths_2 <- ger_data_deaths[t_0:len_ger_data]
 ger_data_confirmed_2 <- ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
 
-ger_data_deaths_2[107:length(ger_data_deaths_2)] <- ger_data_deaths_2[107:length(ger_data_deaths_2)]+(ger_data_deaths_2[107:length(ger_data_deaths_2)]-ger_data_deaths_2[107]) * 0.5384615
+ger_data_deaths_2[tm:length(ger_data_deaths_2)] <- ger_data_deaths_2[tm:length(ger_data_deaths_2)]+(ger_data_deaths_2[tm:length(ger_data_deaths_2)]-ger_data_deaths_2[tm]) * 0.5384615
 
 phi_d <- ger_data_deaths_2 / ger_data_confirmed_2
 #phi_d_median <- quantile(phi_d[23:45],probs=0.5)
-phi_d_median <- mean(phi_d[23:45])
+#phi_d_median <- mean(phi_d[23:45])
+phi_d_median <- mean(phi_d[10:19])
 phi_c <- phi_d / phi_d_median
-phi_c[1:22] <- 1
+phi_c[1:22] <- 1.25
 plot(phi_c,col=1)
 phi_r <-c(1:ti, phi_c[1:(length(phi_c)-ti)])
-phi_r[1:ti] <- 1
+phi_r[1:ti] <- 1.25
 points(phi_r,col=2)
 phi_c <- lowess(1:length(phi_c),phi_c,f=0.3)$y
 phi_r <- lowess(1:length(phi_r),phi_r,f=0.3)$y
@@ -183,6 +185,7 @@ JuliaCall::julia_assign("th", th)
 JuliaCall::julia_assign("thi", thi)
 JuliaCall::julia_assign("thii", thii)
 JuliaCall::julia_assign("thd", thd)
+JuliaCall::julia_assign("tm", tm)
 JuliaCall::julia_assign("n_h_max", n_h_max)
 JuliaCall::julia_assign("phi_h", phi_h)
 JuliaCall::julia_assign("phi_d_1", phi_d_1)
@@ -196,6 +199,7 @@ JuliaCall::julia_eval("@everywhere th = $th")
 JuliaCall::julia_eval("@everywhere thi = $thi")
 JuliaCall::julia_eval("@everywhere thii = $thii")
 JuliaCall::julia_eval("@everywhere thd = $thd")
+JuliaCall::julia_eval("@everywhere tm = $tm")
 JuliaCall::julia_eval("@everywhere n_h_max = $n_h_max")
 JuliaCall::julia_eval("@everywhere phi_h = $phi_h")
 JuliaCall::julia_eval("@everywhere phi_d_1 = $phi_d_1")
@@ -237,7 +241,7 @@ k <- function(p, t) {
 
 JuliaCall::julia_eval("@everywhere function phi_d(u, p, t)
     # phi_d for distributed hospital usage
-    if (t > 107)
+    if (t > tm)
       phi_d_t = 0.65
     else
       phi_d_t = 1
@@ -394,7 +398,7 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, a
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(101,103),(0.15,0.25),(110,115),(0.15,0.2)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(100,103),(0.15,0.25),(110,115),(0.15,0.2)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
@@ -698,7 +702,7 @@ for (plot_out in c(2:0)) {
   #plot(1:length(ger_data_deaths_day),ger_data_confirmed_day)
   #points((1:length(ger_data_deaths_day))-tcd,ger_data_deaths_day/0.043,col=2)
   
-  plot(c(-1e9,107,107,1e9), c(phi_d_median,phi_d_median,phi_d_median*0.65,phi_d_median*0.65)*100,
+  plot(c(-1e9,tm,tm,1e9), c(phi_d_median,phi_d_median,phi_d_median*0.65,phi_d_median*0.65)*100,
        lty=3,col=3,
        type = "l", 
        ylim=c(1,8),
@@ -714,7 +718,7 @@ for (plot_out in c(2:0)) {
   lines(mean$x,mean$y-sd$y,lty=2)
   lines(mean$x,mean$y+sd$y,lty=2)
   
-  lines(c(-1e9,107,107,1e9), c(phi_d_median,phi_d_median,phi_d_median*0.65,phi_d_median*0.65)*100,lty=3,col=3)
+  lines(c(-1e9,tm,tm,1e9), c(phi_d_median,phi_d_median,phi_d_median*0.65,phi_d_median*0.65)*100,lty=3,col=3)
   
   points(data)
   lines(mean,lty=2,col=2)
@@ -735,14 +739,14 @@ for (plot_out in c(2:0)) {
   par(mar=c(5,6,7,5)+0.1)
   
   ger_data_phi_d2 <- ger_data_phi_d
-  ger_data_phi_d2[107:length(ger_data_phi_d2)] <- ger_data_phi_d2[107:length(ger_data_phi_d2)]/0.65
+  ger_data_phi_d2[tm:length(ger_data_phi_d2)] <- ger_data_phi_d2[tm:length(ger_data_phi_d2)]/0.65
   
   ger_data_phi_h <- ger_data_phi_d2 / phi_d_median 
 
   plot(c(-1e9,1e9), c(1,1)*100,
        type="l",
        lty=3,col=3,
-       ylim=c(0,250),
+       ylim=c(0,300),
        xlim=c((t_0+tcd),len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Hidden Cases Per Day (%)")
@@ -782,7 +786,7 @@ for (plot_out in c(2:0)) {
   plot(c(-1e9,1e9), c(1,1)*100,
        type="l",
        lty=3,col=3,
-       ylim=c(80,140),
+       ylim=c(80,240),
        xlim=c(t_0+tcd,len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Hidden Cases Cumulative (%)")
@@ -790,7 +794,7 @@ for (plot_out in c(2:0)) {
   data <- data.frame(x=c((t_0):len_ger_data)-t_0, y=phi_c_plot*100)
   data <- data[1:length(data$x),]
   mean <- lowess(data,f=0.3)
-  mean$y[1:22]<- mean$y[22]
+  #mean$y[1:22]<- mean$y[22]
   sd <- data.frame(x=data$x,y=(mean$y - data$y)^2)
   sd$y[2:(length(sd$x)-1)] <- (sd$y[1:(length(sd$x)-2)] + sd$y[2:(length(sd$x)-1)] + sd$y[3:(length(sd$x))])/2
   sd$y[c(1,length(sd$x))]<- sd$y[c(1,length(sd$x))] *3/2
@@ -804,7 +808,7 @@ for (plot_out in c(2:0)) {
   lines(c(-1e9,1e9), c(1,1)*100,lty=3,col=3)
   
   points(data)
-  mean$y[1:22]<-NA
+  #mean$y[1:22]<-NA
   lines(mean,lty=2,col=2)
   
   for (i in c(1:100)) 
