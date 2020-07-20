@@ -92,14 +92,14 @@ ger_data_confirmed_2 <- ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
 ger_data_deaths_2[tm:length(ger_data_deaths_2)] <- ger_data_deaths_2[tm:length(ger_data_deaths_2)]+(ger_data_deaths_2[tm:length(ger_data_deaths_2)]-ger_data_deaths_2[tm]) * 0.5384615
 
 phi_d <- ger_data_deaths_2 / ger_data_confirmed_2
-#phi_d_median <- quantile(phi_d[23:45],probs=0.5)
+phi_d_median <- quantile(phi_d[10:17],probs=0.5)
 #phi_d_median <- mean(phi_d[23:45])
-phi_d_median <- mean(phi_d[10:19])
+#phi_d_median <- mean(phi_d[10:17])
 phi_c <- phi_d / phi_d_median
-phi_c[1:22] <- 1.25
+phi_c[1:22] <- mean(phi_c[23:45])
 plot(phi_c,col=1)
 phi_r <-c(1:ti, phi_c[1:(length(phi_c)-ti)])
-phi_r[1:ti] <- 1.25
+phi_r[1:ti] <- mean(phi_c[23:45])
 points(phi_r,col=2)
 phi_c <- lowess(1:length(phi_c),phi_c,f=0.3)$y
 phi_r <- lowess(1:length(phi_r),phi_r,f=0.3)$y
@@ -240,13 +240,14 @@ k <- function(p, t) {
 
 
 JuliaCall::julia_eval("@everywhere function phi_d(u, p, t)
-    # phi_d for distributed hospital usage
+    # introduction of dextamethasone
     if (t > tm)
       phi_d_t = 0.65
     else
       phi_d_t = 1
     end
     
+    # phi_d for distributed hospital usage
     if (u > n_h_max) 
       (phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u) * phi_d_t
     else 
@@ -407,7 +408,7 @@ JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11
 
 
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-#p2 <- c(0.3003057, 11.6507903, 0.2818724, 21.8597928, 0.1806365, 53.7949697, 0.1863497, 61.2062883, 0.1691815, 101.7158569, 0.1992506, 114.5066477, 0.1647673)
+#p2 <- c(0.3457520, 11.6355478, 0.2482590, 21.8587844, 0.1833726, 52.4843958, 0.1791791, 61.7558700, 0.1715019, 102.3993141, 0.1947709, 111.5474520, 0.1631217)
 p2
 rnames[p2[2]+t_0]
 rnames[p2[4]+t_0]
@@ -593,7 +594,7 @@ for (plot_out in c(2:0)) {
   par(mar=c(5,6,7,5)+0.1)
   
   R0_plot <- data.frame(t = c(tc0_0:(len_ger_data)), R0 = NA)
-  for (i in 1:nrow(R0_plot)) R0_plot$R0[i] <- sum(ger_data_confirmed[tc0_0+i-(1:3),]-ger_data_confirmed[tc0_0+i-(1:3)-1,])/sum(ger_data_confirmed[tc0_0+i-(1:3)-te,]-ger_data_confirmed[tc0_0+i-(1:3)-te-1,])
+  for (i in 1:nrow(R0_plot)) R0_plot$R0[i] <- sum(ger_data_confirmed[tc0_0+i-(1:3),]-ger_data_confirmed[tc0_0+i-(1:3)-1,])/sum(ger_data_confirmed[tc0_0+i-(1:3)-te,]-ger_data_confirmed[tc0_0+i-(1:3)-te-1,],1e-15)
   R0_plot$t <- R0_plot$t - R0_plot$t[1]
   R0_plot$R0[R0_plot$R0==Inf] = 10
   
@@ -705,7 +706,7 @@ for (plot_out in c(2:0)) {
   plot(c(-1e9,tm,tm,1e9), c(phi_d_median,phi_d_median,phi_d_median*0.65,phi_d_median*0.65)*100,
        lty=3,col=3,
        type = "l", 
-       ylim=c(1,8),
+       ylim=c(1,10),
        xlim=c((t_0+tcd),len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Death Cases (%)")
@@ -746,7 +747,7 @@ for (plot_out in c(2:0)) {
   plot(c(-1e9,1e9), c(1,1)*100,
        type="l",
        lty=3,col=3,
-       ylim=c(0,300),
+       ylim=c(0,400),
        xlim=c((t_0+tcd),len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Hidden Cases Per Day (%)")
@@ -776,6 +777,7 @@ for (plot_out in c(2:0)) {
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()
+  
   
   
   if (plot_out == 2) png("Situation-7.png", width = 640, height = 480)
