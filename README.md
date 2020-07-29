@@ -97,9 +97,10 @@ The predicted begin of a new phase is linked to a real event!
 | 03/12/20 | who declares pandemic                  | social distancing   |  11.6507903 (03/12/20) |             0.2818724 |
 | 03/22/20 | contact restriction                    | shutdown            |  21.8597928 (03/22/20) |             0.1863497 |
 | 04/22/20 | mask requirement in all federal states |                     |  53.7949697 (04/23/20) |             0.1765100 |
-| 05/30/20 | end of shutdown                        | re open             |  61.2062883 (05/01/20) |             0.1691815 |
+| 04/30/20 | end of shutdown                        | re open             |  61.2062883 (05/01/20) |             0.1691815 |
 | 06/18/20 | endemic outbreak in Gütersloh          | begin               | 101.7158569 (06/10/20) |             0.1992506 |
-|          |                                        | end                 | 114.5066477 (06/23/20) |             0.1647673 |
+|          |                                        | end                 | 110.9930793 (06/19/20) |             0.1647673 |
+| 07/29/20 | 2nd phase                              | begin               | 131.2207343 (07/10/20) |             0.1743329 |
 
 ### Forecast (250 Days)
 
