@@ -206,22 +206,22 @@ JuliaCall::julia_eval("@everywhere phi_d_1 = $phi_d_1")
 JuliaCall::julia_eval("@everywhere phi_d_2 = $phi_d_2")
 
 JuliaCall::julia_eval("@everywhere function k(p, t)
-    if (t >= p[14]) 
-      p[15]
-    elseif (t >= p[12] && t < p[14]) 
-      p[13]
-    elseif (t >= p[10] && t < p[12]) 
-      p[11]
-    elseif (t >= p[8] && t < p[10]) 
-      p[9]
-    elseif (t >= p[6] && t < p[8]) 
-      p[7]
-    elseif (t >= p[4] && t < p[6]) 
-      p[5]
+    if (t < p[2]) 
+      p[1]
     elseif (t >= p[2] && t < p[4]) 
       p[3]
-    elseif (t < p[2]) 
-      p[1]
+    elseif (t >= p[4] && t < p[6]) 
+      p[5]
+    elseif (t >= p[6] && t < p[8]) 
+      p[7]
+    elseif (t >= p[8] && t < p[10]) 
+      p[9]
+    elseif (t >= p[10] && t < p[12]) 
+      p[11]
+    elseif (t >= p[12] && t < p[14]) 
+      p[13]
+    elseif (t >= p[14]) 
+      p[15]
     end
   end")
 
@@ -229,87 +229,87 @@ k <- function(p, t) {
   tmp <- 0
   for (tt in 1:length(t))
   {
-    if (t[tt] >= p[12]) tmp[tt] <- p[13]
-    else if (t[tt] >= p[10] && t[tt] < p[12]) tmp[tt] <- p[11]
-    else if (t[tt] >= p[8] && t[tt] < p[10]) tmp[tt] <- p[9]
-    else if (t[tt] >= p[6] && t[tt] < p[8])  tmp[tt] <- p[7]
-    else if (t[tt] >= p[4] && t[tt] < p[6])  tmp[tt] <- p[5]
+    if (t[tt] < p[2]) tmp[tt] <- p[1]
     else if (t[tt] >= p[2] && t[tt] < p[4])  tmp[tt] <- p[3]
-    else if (t[tt] < p[2]) tmp[tt] <- p[1]
+    else if (t[tt] >= p[4] && t[tt] < p[6])  tmp[tt] <- p[5]
+    else if (t[tt] >= p[6] && t[tt] < p[8])  tmp[tt] <- p[7]
+    else if (t[tt] >= p[8] && t[tt] < p[10]) tmp[tt] <- p[9]
+    else if (t[tt] >= p[10] && t[tt] < p[12]) tmp[tt] <- p[11]
+    else if (t[tt] >= p[12] && t[tt] < p[14]) tmp[tt] <- p[13]
+    else if (t[tt] >= p[14]) tmp[tt] <- p[15]
+    
   }
   return (tmp)
 }
 
 
-JuliaCall::julia_eval("@everywhere function phi_d(u, p, t)
+JuliaCall::julia_eval(paste0("@everywhere function phi_d(u, p, t)
     # introduction of dextamethasone
-    if (t > tm)
+    if (t > ",tm,")
       phi_d_t = 0.65
     else
       phi_d_t = 1
     end
     
     # phi_d for distributed hospital usage
-    if (u > n_h_max) 
-      (phi_d_1 * n_h_max / u + phi_d_2 * (u - n_h_max) / u) * phi_d_t
+    if (u > ",n_h_max,") 
+      (",phi_d_1 * n_h_max,"/ u + ",phi_d_2," * (u - ",n_h_max,") / u) * phi_d_t
     else 
-      phi_d_1 * phi_d_t
+      return ",phi_d_1," * phi_d_t
     end
     
     # phi_d for hot spots without distribution
-    #if (u / n_h_max < 1) 
-    #  (phi_d_1 * (1 - (u / n_h_max)) + phi_d_2 * u / n_h_max) * phi_d_t
+    #if (u / ",n_h_max," < 1) 
+    #  (",phi_d_1," * (1 - (u / ",n_h_max,")) + ",phi_d_2," * u / ",n_h_max,") * phi_d_t
     #else
-    #  phi_d_2 * phi_d_t
+    #  ",phi_d_2," * phi_d_t
     #end
-  end")
+  end"))
 
-f = JuliaCall::julia_eval("@everywhere function f(du, u, h, p, t)
-
+f = JuliaCall::julia_eval(paste0("@everywhere function f(du, u, h, p, t)
     # Susceptibles
     du[7] = (
-      - k(p, t) * u[7] / n_max * u[6]
+      - k(p, t) * u[7] / ", n_max, " * u[6]
     )
     
     # Exposed / Incubating
     du[6] = (
       - du[7]
-      +h(p, t - te, Val{1}; idxs = 7)
+      +h(p, t ", - te, ", Val{1}; idxs = 7)
     )
     
     # Infected
     du[5] = (
-      -h(p, t - te, Val{1}; idxs = 7)
-      +h(p, t - te - ti, Val{1}; idxs = 7) * (1-phi_h)
-      +h(p, t - te - th, Val{1}; idxs = 7) * phi_h
-      -h(p, t - te - th - thi, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p, t - thi + thd))
-      +h(p, t - te - th - thi - thii, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p, t - thi + thd - thii))
+      -h(p, t ", - te, ", Val{1}; idxs = 7)
+      +h(p, t ", - te - ti, ", Val{1}; idxs = 7) * (1-",phi_h,")
+      +h(p, t ", - te - th, ", Val{1}; idxs = 7) * ",phi_h,"
+      -h(p, t ", - te - th - thi, ", Val{1}; idxs = 7) * (",phi_h," - phi_d(h(p, t ", - thi + thd, "; idxs = 4), p, t ", - thi + thd, "))
+      +h(p, t ", - te - th - thi - thii, ", Val{1}; idxs = 7) * (",phi_h," - phi_d(h(p, t ", - thi + thd - thii, "; idxs = 4), p, t ", - thi + thd - thii, "))
     )
-
     # Hospitalization 
     du[4] = (
-      - h(p, t - te - th, Val{1}; idxs = 7) *  phi_h 
-      + h(p, t - te - th - thi, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd; idxs = 4), p, t - thi + thd))
-      + h(p, t - te - th - thd, Val{1}; idxs = 7) * phi_d(u[4], p, t)
+      - h(p, t ", - te - th, ", Val{1}; idxs = 7) *  ",phi_h," 
+      + h(p, t ", - te - th - thi, ", Val{1}; idxs = 7) * (",phi_h," - phi_d(h(p, t ", - thi + thd, "; idxs = 4), p, t ", - thi + thd, "))
+      + h(p, t ", - te - th - thd, ", Val{1}; idxs = 7) * phi_d(u[4], p, t)
     )
     
     # Recovered
     du[3] = ( 
-      - h(p, t - te - ti, Val{1}; idxs = 7) *  (1-phi_h) 
-      - h(p, t - te - th - thi - thii, Val{1}; idxs = 7) * (phi_h - phi_d(h(p, t - thi + thd - thii; idxs = 4), p, t - thi + thd - thii))
+      - h(p, t ", - te - ti, ", Val{1}; idxs = 7) *  (1-",phi_h,") 
+      - h(p, t ", - te - th - thi - thii, ", Val{1}; idxs = 7) * (",phi_h," - phi_d(h(p, t ", - thi + thd - thii, "; idxs = 4), p, t ", - thi + thd - thii, "))
     )
     
     # Deaths
     du[2] = ( 
-      - h(p, t - te - th - thd, Val{1}; idxs = 7) *  phi_d(u[4], p, t)
+      - h(p, t ", - te - th - thd, ", Val{1}; idxs = 7) *  phi_d(u[4], p, t)
     )
     
     # Confirmed
     du[1] = du[5] + du[4] + du[3] + du[2]
     
-  end")
+  end"))
 
-JuliaCall::julia_eval("@everywhere lags = [te, te + ti, te + th, te + th + thi, te + th + thd, thi - thd, te + th + thi + thii]")
+JuliaCall::julia_eval(paste0("@everywhere lags = [",te,", ",te + ti,", ",te + th,", ",te + th + thi,", ",te + th + thd,", ", thi - thd,", ",te + th + thi + thii,"]"))
 
 
 
@@ -321,29 +321,21 @@ JuliaCall::julia_eval("@everywhere lags = [te, te + ti, te + th, te + th + thi, 
 # x = x_0 exp(k * t)
 # x_0 = 1
 
-h = JuliaCall::julia_eval("@everywhere function h(p, t; idxs::Union{Nothing,Int} = nothing)
-    if t > -te
-      #if idxs === nothing
-      #  u0 * exp(p[1] * t)
-      #else
-        u0[idxs] * exp(p[1] * t)
-      #end
+h = JuliaCall::julia_eval(paste0("@everywhere function h(p, t; idxs::Union{Nothing,Int} = nothing)
+    if t > ", - te, "
+      return u0[idxs] * exp(p[1] * t)
     else
-      #if idxs === nothing
-      #  [0, 0, 0, 0, 0, 0, n_max]
-      #else
-        0
-      #end
+      return 0
     end
-  end")
+  end"))
 
-h = JuliaCall::julia_eval("@everywhere function h(p, t, deriv::Type{Val{1}}; idxs::Union{Nothing,Int} = nothing)
-    if t > -te
-      - k(p, t) * u0[7] / n_max * u0[6] * (exp(k(p, t - te) * t))
+h = JuliaCall::julia_eval(paste0("@everywhere function h(p, t, deriv::Type{Val{1}}; idxs::Union{Nothing,Int} = nothing)
+    if t > ", - te, "
+      - k(p, t) * u0[7] / ", n_max, " * u0[6] * (exp(k(p, t ", - te, ") * t))
     else
-        0
+      return 0
     end
-  end")
+  end"))
 
 
 
@@ -577,7 +569,7 @@ for (plot_out in c(2:0)) {
   lines(c(tc1_0:tc1_max)+dt_r,ln_res_2b$fitted, col = 2, lty = 2)
   lines(c(tc2_0:tc2_max)+dt_r,ln_res_3b$fitted, col = 2, lty = 3)
   lines((tc3_0+dt_r):min(tc3_max+dt_r,len_ger_data),ln_res_4b$fitted, col = 2, lty = 4)
-
+  
   for (i in c(1:100)) 
     lines(c(i*7-22,i*7-22), (c(-1e9, 1e9)), type="l", lty = 5, col="light gray" )
   axis(3, c(1:100)*7-22, c(1:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
@@ -612,7 +604,7 @@ for (plot_out in c(2:0)) {
        xlim=c(t_0,len_ger_data-tc0_0),
        xlab=paste("Days after", rnames[tc0_0]),
        ylab="Basic Reproductive Number R0")
-
+  
   data <- data.frame(x=R0_plot$t, y=R0_plot$R0)
   mean <- lowess(data,f=0.2)
   sd <- data.frame(x=data$x,y=(mean$y - data$y)^2)
@@ -696,12 +688,12 @@ for (plot_out in c(2:0)) {
   if (plot_out != 2) title("Situation COVID-19 in Germany",
                            sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
   if (plot_out > 1) dev.off()
-
+  
   
   
   if (plot_out == 2) png("Situation-5.png", width = 640, height = 480)
   par(mar=c(5,6,7,5)+0.1)
-
+  
   ger_data_deaths_day <- lowess(ger_data_deaths[t_0:len_ger_data]-ger_data_deaths[(t_0-1):(len_ger_data-1)],f=0.1)$y
   ger_data_confirmed_day <- lowess(ger_data_confirmed[t_0:len_ger_data]-ger_data_confirmed[(t_0-1):(len_ger_data-1)],f=0.1)$y
   
@@ -750,7 +742,7 @@ for (plot_out in c(2:0)) {
   ger_data_phi_d2[tm:length(ger_data_phi_d2)] <- ger_data_phi_d2[tm:length(ger_data_phi_d2)]/0.65
   
   ger_data_phi_h <- ger_data_phi_d2 / phi_d_median 
-
+  
   plot(c(-1e9,1e9), c(1,1)*100,
        type="l",
        lty=3,col=3,
@@ -1694,4 +1686,3 @@ for (plot_out in c(2:0)) {
 system("git add *")
 system(paste("git commit -m \"Update Data ", format(Sys.time(), "%m/%d/%Y %H:%M"),"\"", sep=""))
 system("git push")
-
