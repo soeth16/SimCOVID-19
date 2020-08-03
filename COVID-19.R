@@ -178,34 +178,7 @@ n_max <- 83.019213e6
 
 
 
-JuliaCall::julia_assign("n_max",n_max) 
-JuliaCall::julia_assign("te", te) 
-JuliaCall::julia_assign("ti", ti) 
-JuliaCall::julia_assign("th", th)
-JuliaCall::julia_assign("thi", thi)
-JuliaCall::julia_assign("thii", thii)
-JuliaCall::julia_assign("thd", thd)
-JuliaCall::julia_assign("tm", tm)
-JuliaCall::julia_assign("n_h_max", n_h_max)
-JuliaCall::julia_assign("phi_h", phi_h)
-JuliaCall::julia_assign("phi_d_1", phi_d_1)
-JuliaCall::julia_assign("phi_d_2", phi_d_2)
-
-
-JuliaCall::julia_eval("@everywhere n_max = $n_max")
-JuliaCall::julia_eval("@everywhere te = $te")
-JuliaCall::julia_eval("@everywhere ti = $ti") 
-JuliaCall::julia_eval("@everywhere th = $th")
-JuliaCall::julia_eval("@everywhere thi = $thi")
-JuliaCall::julia_eval("@everywhere thii = $thii")
-JuliaCall::julia_eval("@everywhere thd = $thd")
-JuliaCall::julia_eval("@everywhere tm = $tm")
-JuliaCall::julia_eval("@everywhere n_h_max = $n_h_max")
-JuliaCall::julia_eval("@everywhere phi_h = $phi_h")
-JuliaCall::julia_eval("@everywhere phi_d_1 = $phi_d_1")
-JuliaCall::julia_eval("@everywhere phi_d_2 = $phi_d_2")
-
-JuliaCall::julia_eval("@everywhere function k(p, t)
+JuliaCall::julia_eval("@everywhere @inbounds function k(p, t)::Float64
     if (t < p[2]) 
       p[1]
     elseif (t >= p[2] && t < p[4]) 
@@ -220,8 +193,10 @@ JuliaCall::julia_eval("@everywhere function k(p, t)
       p[11]
     elseif (t >= p[12] && t < p[14]) 
       p[13]
-    elseif (t >= p[14]) 
+    elseif (t >= p[14] && t < p[16]) 
       p[15]
+    elseif (t >= p[16]) 
+      p[17]
     end
   end")
 
@@ -236,72 +211,61 @@ k <- function(p, t) {
     else if (t[tt] >= p[8] && t[tt] < p[10]) tmp[tt] <- p[9]
     else if (t[tt] >= p[10] && t[tt] < p[12]) tmp[tt] <- p[11]
     else if (t[tt] >= p[12] && t[tt] < p[14]) tmp[tt] <- p[13]
-    else if (t[tt] >= p[14]) tmp[tt] <- p[15]
-    
+    else if (t[tt] >= p[14] && t[tt] < p[16]) tmp[tt] <- p[15]
+    else if (t[tt] >= p[16]) tmp[tt] <- p[17]
   }
   return (tmp)
 }
 
 
-JuliaCall::julia_eval(paste0("@everywhere function phi_d(u, p, t)
-    # introduction of dextamethasone
-    if (t > ",tm,")
-      phi_d_t = 0.65
-    else
-      phi_d_t = 1
-    end
-    
-    # phi_d for distributed hospital usage
-    if (u > ",n_h_max,") 
-      (",phi_d_1 * n_h_max,"/ u + ",phi_d_2," * (u - ",n_h_max,") / u) * phi_d_t
-    else 
-      return ",phi_d_1," * phi_d_t
-    end
-    
-    # phi_d for hot spots without distribution
-    #if (u / ",n_h_max," < 1) 
-    #  (",phi_d_1," * (1 - (u / ",n_h_max,")) + ",phi_d_2," * u / ",n_h_max,") * phi_d_t
-    #else
-    #  ",phi_d_2," * phi_d_t
-    #end
-  end"))
+# introduction of dextamethasone
+JuliaCall::julia_eval(paste0("@everywhere @fastmath phi_dextamethasone(t)::Float64 = t > ",tm," ? 0.65 : 1"))
 
-f = JuliaCall::julia_eval(paste0("@everywhere function f(du, u, h, p, t)
+# phi_d for distributed hospital usage
+JuliaCall::julia_eval(paste0("@everywhere @fastmath phi_d(u, t)::Float64 = (u > ",n_h_max," ?  (",phi_d_1 * n_h_max,"/ u + ",phi_d_2," * (u - ",n_h_max,") / u) : ",phi_d_1," ) * phi_dextamethasone(t)"))
+
+# phi_d for hot spots without distribution
+# JuliaCall::julia_eval(paste0("@everywhere @fastmath phi_d(u, t)::Float64 = (u / ",n_h_max," < 1 ?  (",phi_d_1," * (1 - (u / ",n_h_max,")) + ",phi_d_2," * u / ",n_h_max,") : ",phi_d_2," ) * phi_dextamethasone(t)"))
+
+
+f = JuliaCall::julia_eval(paste0("@everywhere @fastmath function f(du, u, h, p, t)
+    
+    
     # Susceptibles
     du[7] = (
-      - k(p, t) * u[7] / ", n_max, " * u[6]
+      - k(p, t) * u[7]::Float64 / ", n_max, " * u[6]::Float64
     )
     
     # Exposed / Incubating
     du[6] = (
       - du[7]
-      +h(p, t ", - te, ", Val{1}; idxs = 7)
+      +h(p, t ", - te, ", Val{1}; idxs = 7)::Float64
     )
     
     # Infected
     du[5] = (
-      -h(p, t ", - te, ", Val{1}; idxs = 7)
-      +h(p, t ", - te - ti, ", Val{1}; idxs = 7) * (1-",phi_h,")
-      +h(p, t ", - te - th, ", Val{1}; idxs = 7) * ",phi_h,"
-      -h(p, t ", - te - th - thi, ", Val{1}; idxs = 7) * (",phi_h," - phi_d(h(p, t ", - thi + thd, "; idxs = 4), p, t ", - thi + thd, "))
-      +h(p, t ", - te - th - thi - thii, ", Val{1}; idxs = 7) * (",phi_h," - phi_d(h(p, t ", - thi + thd - thii, "; idxs = 4), p, t ", - thi + thd - thii, "))
+      -h(p, t ", - te, ", Val{1}; idxs = 7)::Float64
+      +h(p, t ", - te - ti, ", Val{1}; idxs = 7)::Float64* (1-",phi_h,")
+      +h(p, t ", - te - th, ", Val{1}; idxs = 7)::Float64 * ",phi_h,"
+      -h(p, t ", - te - th - thi, ", Val{1}; idxs = 7)::Float64 * (",phi_h," - phi_d(h(p, t ", - thi + thd, "; idxs = 4)::Float64, t ", - thi + thd, "))
+      +h(p, t ", - te - th - thi - thii, ", Val{1}; idxs = 7)::Float64 * (",phi_h," - phi_d(h(p, t ", - thi + thd - thii, "; idxs = 4)::Float64, t ", - thi + thd - thii, "))
     )
     # Hospitalization 
     du[4] = (
-      - h(p, t ", - te - th, ", Val{1}; idxs = 7) *  ",phi_h," 
-      + h(p, t ", - te - th - thi, ", Val{1}; idxs = 7) * (",phi_h," - phi_d(h(p, t ", - thi + thd, "; idxs = 4), p, t ", - thi + thd, "))
-      + h(p, t ", - te - th - thd, ", Val{1}; idxs = 7) * phi_d(u[4], p, t)
+      - h(p, t ", - te - th, ", Val{1}; idxs = 7)::Float64 *  ",phi_h," 
+      + h(p, t ", - te - th - thi, ", Val{1}; idxs = 7)::Float64 * (",phi_h," - phi_d(h(p, t ", - thi + thd, "; idxs = 4)::Float64, t ", - thi + thd, "))
+      + h(p, t ", - te - th - thd, ", Val{1}; idxs = 7)::Float64 * phi_d(u[4]::Float64, t)
     )
     
     # Recovered
     du[3] = ( 
-      - h(p, t ", - te - ti, ", Val{1}; idxs = 7) *  (1-",phi_h,") 
-      - h(p, t ", - te - th - thi - thii, ", Val{1}; idxs = 7) * (",phi_h," - phi_d(h(p, t ", - thi + thd - thii, "; idxs = 4), p, t ", - thi + thd - thii, "))
+      - h(p, t ", - te - ti, ", Val{1}; idxs = 7)::Float64 *  (1-",phi_h,") 
+      - h(p, t ", - te - th - thi - thii, ", Val{1}; idxs = 7)::Float64 * (",phi_h," - phi_d(h(p, t ", - thi + thd - thii, "; idxs = 4)::Float64, t ", - thi + thd - thii, "))
     )
     
     # Deaths
     du[2] = ( 
-      - h(p, t ", - te - th - thd, ", Val{1}; idxs = 7) *  phi_d(u[4], p, t)
+      - h(p, t ", - te - th - thd, ", Val{1}; idxs = 7)::Float64 *  phi_d(u[4]::Float64, t)
     )
     
     # Confirmed
@@ -321,21 +285,9 @@ JuliaCall::julia_eval(paste0("@everywhere lags = [",te,", ",te + ti,", ",te + th
 # x = x_0 exp(k * t)
 # x_0 = 1
 
-h = JuliaCall::julia_eval(paste0("@everywhere function h(p, t; idxs::Union{Nothing,Int} = nothing)
-    if t > ", - te, "
-      return u0[idxs] * exp(p[1] * t)
-    else
-      return 0
-    end
-  end"))
+JuliaCall::julia_eval(paste0("@everywhere h(p, t; idxs::Union{Nothing,Int} = nothing)::Float64 =  t > ", - te, " ? u0[idxs] * exp(p[1] * t) : 0"))
 
-h = JuliaCall::julia_eval(paste0("@everywhere function h(p, t, deriv::Type{Val{1}}; idxs::Union{Nothing,Int} = nothing)
-    if t > ", - te, "
-      - k(p, t) * u0[7] / ", n_max, " * u0[6] * (exp(k(p, t ", - te, ") * t))
-    else
-      return 0
-    end
-  end"))
+JuliaCall::julia_eval(paste0("@everywhere h(p, t, deriv::Type{Val{1}}; idxs::Union{Nothing,Int} = nothing)::Float64 = t > ", - te, " ? (- k(p, t) * u0[7] / ", n_max, " * u0[6] * (exp(k(p, t ", - te, ") * t))) : 0"))
 
 
 
@@ -388,12 +340,12 @@ JuliaCall::julia_assign("data", data)
 JuliaCall::julia_eval("@everywhere t = $t")
 JuliaCall::julia_eval("@everywhere data = $data")
 JuliaCall::julia_eval("distributions = [fit_mle(Normal,data[i,j,:]) for i in 1:3, j in 1:length(t)]")
-JuliaCall::julia_eval("obj = build_loss_objective(prob, Rodas5(), reltol=1e-4, abstol=1e-7, maxiters = 1e5, LogLikeLoss(t,distributions), verbose=true); nothing")
+JuliaCall::julia_eval("obj = build_loss_objective(prob, AutoTsit5(Rosenbrock23()), reltol=1e-4, abstol=1e-9, maxiters = 1e4, LogLikeLoss(t,distributions), verbose=true); nothing")
 
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(100,103),(0.15,0.3),(110,115),(0.15,0.25),(125,135),(0.15,0.25)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(100,103),(0.15,0.3),(110,115),(0.15,0.25),(120,130),(0.15,0.25),(135,150),(0.15,0.25)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
@@ -405,13 +357,14 @@ JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
 #p2 <- c(0.3431281, 11.7512382, 0.2493890, 21.8387006, 0.1839484, 52.1429354, 0.1787299, 61.6782381, 0.1749180, 102.2763900, 0.1866260, 111.2243827, 0.1828052, 129.4603358, 0.1711564)
 p2
-rnames[p2[2]+t_0]
-rnames[p2[4]+t_0]
-rnames[p2[6]+t_0]
-rnames[p2[8]+t_0]
-rnames[p2[10]+t_0]
-rnames[p2[12]+t_0]
-rnames[p2[14]+t_0]
+print(paste(p2[3], p2[2], rnames[p2[2]+t_0]))
+print(paste(p2[5], p2[4], rnames[p2[4]+t_0]))
+print(paste(p2[7], p2[6], rnames[p2[6]+t_0]))
+print(paste(p2[9], p2[8], rnames[p2[8]+t_0]))
+print(paste(p2[11], p2[10], rnames[p2[10]+t_0]))
+print(paste(p2[13], p2[12], rnames[p2[12]+t_0]))
+print(paste(p2[15], p2[14], rnames[p2[14]+t_0]))
+print(paste(p2[17], p2[16], rnames[p2[16]+t_0]))
 
 
 
@@ -442,7 +395,7 @@ for (plot_out in c(2:0)) {
   
   JuliaCall::julia_assign("p", p2)
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, AutoTsit5(Rosenbrock23()), reltol=1e-4, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
   sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   if (plot_out == 2) png("Model_vs_Situation-1.png", width = 640, height = 480)
@@ -980,9 +933,9 @@ for (plot_out in c(2:0)) {
   #   
   #####################################################################################
   
-  JuliaCall::julia_assign("p", c(p2[1], 1000, p2[1], 1001, p2[1], 1002, p2[1], 1003, p2[1], 1004, p2[1], 1005, p2[1], 1006, p2[1]))
+  JuliaCall::julia_assign("p", c(p2[1], 1000, p2[1], 1001, p2[1], 1002, p2[1], 1003, p2[1], 1004, p2[1], 1005, p2[1], 1006, p2[1], 1007, p2[1]))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, AutoTsit5(Rosenbrock23()), reltol=1e-4, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
   sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   
@@ -1138,9 +1091,9 @@ for (plot_out in c(2:0)) {
   #   
   #####################################################################################
   
-  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], p2[6], p2[7], 50, p2[1], 80, p2[1], 100, p2[1], 130, p2[1]))
+  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], p2[6], p2[7], 50, p2[1], 80, p2[1], 100, p2[1], 130, p2[1], 150, p2[1]))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, AutoTsit5(Rosenbrock23()), reltol=1e-4, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
   sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   
@@ -1295,9 +1248,9 @@ for (plot_out in c(2:0)) {
   #   
   #####################################################################################
   
-  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], p2[6], p2[7], 50, p2[3], 80, p2[3], 100, p2[3], 130, p2[3]))
+  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[3], p2[4], p2[5], p2[6], p2[7], 50, p2[3], 80, p2[3], 100, p2[3], 130, p2[3], 150, p2[3]))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, AutoTsit5(Rosenbrock23()), reltol=1e-4, abstol=1e-9, maxiters = 100000, saveat=saveat); nothing")
   sol = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   
@@ -1452,9 +1405,9 @@ for (plot_out in c(2:0)) {
   #   
   #####################################################################################
   
-  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1]))
+  JuliaCall::julia_assign("p", c(p2[1], p2[2], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1], p2[3], p2[1]))
   JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-  JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-9, abstol=1e-12, maxiters = 10000, saveat=saveat); nothing")
+  JuliaCall::julia_eval("sol = solve(prob, AutoTsit5(Rosenbrock23()), reltol=1e-4, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
   sol1 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
   
   rbcol = rainbow(11)
@@ -1484,10 +1437,10 @@ for (plot_out in c(2:0)) {
     f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
     k2 <- uniroot(f_k2 , c(0.01, 1))$root
     
-    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2, tk_2+5, k2, tk_2+6, k2)
+    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2, tk_2+5, k2, tk_2+6, k2, tk_2+7, k2)
     JuliaCall::julia_assign("p", p_var)
     JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-    JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-7, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
+    JuliaCall::julia_eval("sol = solve(prob, AutoTsit5(Rosenbrock23()), reltol=1e-4, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
     sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
     
     par(new=T)
@@ -1555,10 +1508,10 @@ for (plot_out in c(2:0)) {
     f_k2 <- function(k2) k2 *(1-exp(-k2 * te)) - log(R0_2 + 1) / te
     k2 <- uniroot(f_k2 , c(0.01, 1))$root
     
-    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2, tk_2+5, k2, tk_2+6, k2)
+    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2, tk_2+5, k2, tk_2+6, k2, tk_2+7, k2)
     JuliaCall::julia_assign("p", p_var)
     JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-    JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-9, abstol=1e-12, maxiters = 10000, saveat=saveat); nothing")
+    JuliaCall::julia_eval("sol = solve(prob, AutoTsit5(Rosenbrock23()), reltol=1e-4, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
     sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
     
     par(new=T)
@@ -1630,10 +1583,10 @@ for (plot_out in c(2:0)) {
     k2 <- uniroot(f_k2 , c(0.01, 1))$root
     
     
-    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2, tk_2+5, k2, tk_2+6, k2)
+    p_var <- c(p2[1], tk_2, k2, tk_2+1, k2, tk_2+2, k2, tk_2+3, k2, tk_2+4, k2, tk_2+5, k2, tk_2+6, k2, tk_2+6, k2)
     JuliaCall::julia_assign("p", p_var)
     JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
-    JuliaCall::julia_eval("sol = solve(prob, Rodas5(), reltol=1e-9, abstol=1e-12, maxiters = 10000, saveat=saveat); nothing")
+    JuliaCall::julia_eval("sol = solve(prob, AutoTsit5(Rosenbrock23()), reltol=1e-8, abstol=1e-9, maxiters = 10000, saveat=saveat); nothing")
     sol2 = list(t=JuliaCall::julia_eval("sol.t"), u=JuliaCall::julia_eval("typeof(u0)<:Number ? Array(sol) : sol'"))
     
     par(new=T)
