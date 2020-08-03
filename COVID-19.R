@@ -345,7 +345,7 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, AutoTsit5(Rosenbrock23()
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(100,103),(0.15,0.3),(110,115),(0.15,0.25),(120,130),(0.15,0.25),(135,150),(0.15,0.25)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(100,103),(0.15,0.3),(110,115),(0.15,0.25),(120,130),(0.15,0.25),(130,140),(0.15,0.25)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
@@ -357,6 +357,7 @@ JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11
 p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
 #p2 <- c(0.3431281, 11.7512382, 0.2493890, 21.8387006, 0.1839484, 52.1429354, 0.1787299, 61.6782381, 0.1749180, 102.2763900, 0.1866260, 111.2243827, 0.1828052, 129.4603358, 0.1711564)
 p2
+print(paste(p2[1], 0, rnames[0+t_0]))
 print(paste(p2[3], p2[2], rnames[p2[2]+t_0]))
 print(paste(p2[5], p2[4], rnames[p2[4]+t_0]))
 print(paste(p2[7], p2[6], rnames[p2[6]+t_0]))

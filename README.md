@@ -91,16 +91,17 @@ Hidden cases are calculated by the amount of death casses per day.
 
 The predicted begin of a new phase is linked to a real event!
 
-|   date   |                   event                |        phase        |     estimated date     | estimated growth rate |
-|----------|----------------------------------------|---------------------|------------------------|-----------------------|
-| 03/01/20 | begin of simulation                    | uncontrolled growth |                      0 |             0.3003057 |
-| 03/12/20 | who declares pandemic                  | social distancing   |  11.6507903 (03/12/20) |             0.2818724 |
-| 03/22/20 | contact restriction                    | shutdown            |  21.8597928 (03/22/20) |             0.1863497 |
-| 04/22/20 | mask requirement in all federal states |                     |  53.7949697 (04/23/20) |             0.1765100 |
-| 04/30/20 | end of shutdown                        | re open             |  61.2062883 (05/01/20) |             0.1691815 |
-| 06/18/20 | endemic outbreak in Gütersloh          | begin               | 101.7158569 (06/10/20) |             0.1992506 |
-|          |                                        | end                 | 111.6475013 (06/20/20) |             0.1647673 |
-| 07/06/20 | begin of school vacations              | 2nd phase           | 126.3217276 (07/05/20) |             0.1903293 |
+|   date   |                   event                |        phase        |        estimated date       | estimated growth rate |
+|----------|----------------------------------------|---------------------|-----------------------------|-----------------------|
+| 03/01/20 | begin of simulation                    | uncontrolled growth |                0 (03/01/20) |     0.343451529740432 |
+| 03/12/20 | who declares pandemic                  | social distancing   | 11.6044817950348 (03/12/20) |     0.250465928149758 |
+| 03/22/20 | contact restriction                    | shutdown            | 21.8496919557852 (03/22/20) |     0.182463773528515 |
+| 04/22/20 | mask requirement in all federal states |                     | 52.5601657052918 (04/22/20) |     0.189752082935843 |
+| 04/30/20 | end of shutdown                        | re open             | 61.9761514250585 (05/01/20) |     0.168857144604232 |
+| 06/18/20 | endemic outbreak in Gütersloh          | begin               | 100.554708779522 (06/09/20) |     0.208644178682707 |
+|          |                                        | end                 | 110.981269331214 (06/19/20) |     0.155656851503377 |
+| 07/06/20 | begin of school vacations I            | 2nd phase           | 126.120822599879 (07/05/20) |     0.188918924378758 |
+| 07/16/20 | begin of school vacations II           |                     | 135.397220216076 (07/14/20) |     0.21519268465177  |
 
 ### Forecast (250 Days)
 
