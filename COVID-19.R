@@ -331,9 +331,9 @@ JuliaCall::julia_eval("prob = DDEProblem(f,u0,h,tspan,p,constant_lags=lags)")
 data <- array(dim=c(3,length(t),1000))
 for (j in 1:length(t))
 {
-  data[1,j,] <- rnorm(1000,data_df[j,1], data_sd[j,1]+50)
-  data[2,j,] <- rnorm(1000,data_df[j,2], data_sd[j,2]+50)
-  data[3,j,] <- rnorm(1000,data_df[j,3], data_sd[j,3]+50)
+  data[1,j,] <- rnorm(1000,data_df[j,1], (data_sd[j,1]+50))
+  data[2,j,] <- rnorm(1000,data_df[j,2], (data_sd[j,2]+50)*10)
+  data[3,j,] <- rnorm(1000,data_df[j,3], (data_sd[j,3]+50)*2)
 }
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
@@ -345,7 +345,7 @@ JuliaCall::julia_eval("obj = build_loss_objective(prob, AutoTsit5(Rosenbrock23()
 
 
 
-JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(100,103),(0.15,0.3),(110,115),(0.15,0.25),(120,130),(0.15,0.25),(130,140),(0.15,0.25)]")
+JuliaCall::julia_eval("bound1 = Tuple{Float64,Float64}[(0.25,0.35),(11.6,11.8),(0.2,0.3),(21.8,22),(0.15,0.2),(52,54),(0.15,0.2),(61,63),(0.15,0.2),(100,103),(0.15,0.3),(110,115),(0.15,0.25),(120,130),(0.15,0.25),(135,140),(0.15,0.25)]")
 JuliaCall::julia_eval("res1 = bboptimize(obj;SearchRange = bound1, MaxSteps = 11e3, NumDimensions = 15,
     Workers = workers(),
     TraceMode = :compact,
