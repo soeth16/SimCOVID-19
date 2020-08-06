@@ -332,7 +332,7 @@ data <- array(dim=c(3,length(t),1000))
 for (j in 1:length(t))
 {
   data[1,j,] <- rnorm(1000,data_df[j,1], (data_sd[j,1]+50))
-  data[2,j,] <- rnorm(1000,data_df[j,2], (data_sd[j,2]+50)*10)
+  data[2,j,] <- rnorm(1000,data_df[j,2], (data_sd[j,2]+50)*100)
   data[3,j,] <- rnorm(1000,data_df[j,3], (data_sd[j,3]+50)*2)
 }
 JuliaCall::julia_assign("t", t-t_0)
