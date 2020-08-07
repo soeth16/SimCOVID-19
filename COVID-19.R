@@ -146,14 +146,11 @@ k2 <- uniroot(f_k2 , c(0.01, 1))$root
 # assume median from the first three german lock down weeks (good)
 phi_d_1 <- phi_d_median
 
-# assume Hubei / China (bad)
-phi_d_2 <- as.numeric(quantile(
-  subset(csse_covid_19_time_series_deaths, `Province/State` == "Hubei", select = c(21:81)) /subset(csse_covid_19_time_series_confirmed, `Province/State` == "Hubei", select = c(10:70)),
-  probs = 0.9
-))
+# assume crtical from Zunyou and McGoogan (2020)
+phi_h <- 2087/44415
 
-# assume phi_h from max phi_d_2 (Hubei / China)
-phi_h <- 0.14
+# assume phi_d_2 = phi_h * 95%
+phi_d_2 <- phi_h * 0.95
 
 # http://www.gbe-bund.de/gbe10/I?I=838:37792217D 
 n_h_max <- 28031 
@@ -333,7 +330,7 @@ for (j in 1:length(t))
 {
   data[1,j,] <- rnorm(1000,data_df[j,1], (data_sd[j,1]+50))
   data[2,j,] <- rnorm(1000,data_df[j,2], (data_sd[j,2]+50)*100)
-  data[3,j,] <- rnorm(1000,data_df[j,3], (data_sd[j,3]+50)*2)
+  data[3,j,] <- rnorm(1000,data_df[j,3], (data_sd[j,3]+50)*10)
 }
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
