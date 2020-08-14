@@ -92,9 +92,10 @@ ger_data_confirmed_2 <- ger_data_confirmed[(t_0-tcd):(len_ger_data-tcd)]
 ger_data_deaths_2[tm:length(ger_data_deaths_2)] <- ger_data_deaths_2[tm:length(ger_data_deaths_2)]+(ger_data_deaths_2[tm:length(ger_data_deaths_2)]-ger_data_deaths_2[tm]) * 0.5384615
 
 phi_d <- ger_data_deaths_2 / ger_data_confirmed_2
-phi_d_median <- quantile(phi_d[10:17],probs=0.5)
+#phi_d_median <- quantile(phi_d[10:17],probs=0.5)
 #phi_d_median <- mean(phi_d[23:45])
 #phi_d_median <- mean(phi_d[10:17])
+phi_d_median <- 0.0144093
 phi_c <- phi_d / phi_d_median
 phi_c[1:22] <- mean(phi_c[23:45])
 plot(phi_c,col=1)
@@ -147,7 +148,7 @@ k2 <- uniroot(f_k2 , c(0.01, 1))$root
 phi_d_1 <- phi_d_median
 
 # assume crtical from Zunyou and McGoogan (2020)
-phi_h <- 2087/44415
+phi_h <- 2087/44415*phi_d_median/(1023/44672)
 
 # assume phi_d_2 = phi_h * 95%
 phi_d_2 <- phi_h * 0.95
@@ -330,7 +331,7 @@ for (j in 1:length(t))
 {
   data[1,j,] <- rnorm(1000,data_df[j,1], (data_sd[j,1]+50))
   data[2,j,] <- rnorm(1000,data_df[j,2], (data_sd[j,2]+50)*100)
-  data[3,j,] <- rnorm(1000,data_df[j,3], (data_sd[j,3]+50)*10)
+  data[3,j,] <- rnorm(1000,data_df[j,3], (data_sd[j,3]+50)*20)
 }
 JuliaCall::julia_assign("t", t-t_0)
 JuliaCall::julia_assign("data", data)
@@ -600,7 +601,7 @@ for (plot_out in c(2:0)) {
   R0_plot$t <- R0_plot$t - R0_plot$t[1] 
   plot(c(-1e9,1e9), c(1/te, 1/te), lty=3,col=3,
        type = "l", 
-       ylim=c(0,0.5),
+       ylim=c(0.1,0.6),
        xlim=c(t_0,len_ger_data-tc0_0),
        xlab=paste("Days after", rnames[tc0_0]),
        ylab=expression('Growth Rate '*(D^-1)))
@@ -656,7 +657,7 @@ for (plot_out in c(2:0)) {
   plot(c(-1e9,tm,tm,1e9), c(phi_d_median,phi_d_median,phi_d_median*0.65,phi_d_median*0.65)*100,
        lty=3,col=3,
        type = "l", 
-       ylim=c(1,10),
+       ylim=c(0,10),
        xlim=c((t_0+tcd),len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Death Cases (%)")
@@ -697,7 +698,7 @@ for (plot_out in c(2:0)) {
   plot(c(-1e9,1e9), c(1,1)*100,
        type="l",
        lty=3,col=3,
-       ylim=c(0,400),
+       ylim=c(0,600),
        xlim=c((t_0+tcd),len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Hidden Cases Per Day (%)")
@@ -738,7 +739,7 @@ for (plot_out in c(2:0)) {
   plot(c(-1e9,1e9), c(1,1)*100,
        type="l",
        lty=3,col=3,
-       ylim=c(80,240),
+       ylim=c(80,350),
        xlim=c(t_0+tcd,len_ger_data)-t_0,
        xlab=paste("Days after", rnames[t_0]),
        ylab="Hidden Cases Cumulative (%)")
