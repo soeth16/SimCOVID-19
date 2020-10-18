@@ -5,7 +5,7 @@ Simulation of the SARS-CoV-2 pandemic virus outbreak which cause the corona viru
 
 ## Data
 
-Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/research/public-health/ncov/>).
+Thanks to esri for sharing the data (<https://opendata.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0.csv>).
 
 ## Model
 
@@ -69,21 +69,30 @@ Thanks for sharing the data by Johns Hopkins CSSE (<https://systems.jhu.edu/rese
 
 ### Current Situation
 
-![Situation](Situation-1.png)
+#### Confirmed Cases
 
-The growths rate is determined by logarithmic fitting of the confirmed cases:
+![Confirmed Cases](Confirmed_Cases-1.png)
 
-![Situation - logarithmic scale](Situation-2.png)
+#### Cumulative
 
-Basic Reproductive Number R0 has been determined by the nowcast method:
+![Cumulative](Cases_Cumulative-1.png)
 
-![Situation - Basic Reproductive Number](Situation-3.png)
+#### Basic Reproductive Number R0
 
-![Death Casses](Situation-5.png)
+R0 has been determined by the nowcast method:
 
-Hidden cases are calculated by the amount of death casses per day.
+![Situation - Basic Reproductive Number](Basic_Reproductive_Number_R0-1.png)
 
-![Hidden Casses](Situation-6.png)
+#### Death Cases
+
+![Death Cases](Death_Cases_per_Day-1.png)
+![Death Cases](Death_Cases_per_Day-2.png)
+
+#### Hidden Cases
+
+Hidden cases are calculated by the amount of death cases by untractable. 
+
+![Hidden Casses](Hidden_Cases_per_Day.png)
 
 ### Model vs Situation
 
@@ -139,5 +148,7 @@ The day of health system crash is close to the time point the shutdown if an ![$
 
 * <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Steckbrief.html>
 * <https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/R-Wert-Erlaeuterung.pdf?__blob=publicationFile>
+* <https://www.rki.de/DE/Content/Gesundheitsmonitoring/Studien/cml-studie/Factsheet_Bad_Feilnbach.html>
 * <https://www.recoverytrial.net/files/recovery_dexamethasone_statement_160620_v2final.pdf>
 * <https://jamanetwork.com/journals/jama/fullarticle/2762130>
+* <https://experience.arcgis.com/experience/478220a4c454480e823b17327b2bf1d4>
