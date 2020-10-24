@@ -120,11 +120,7 @@ The predicted begin of a new phase is linked to a real event!
 
 ![Forecast ARDS](Forecast-ARDS-2.png)
 
-### Scenario 1 - no social distancing and no lock down
-
-![Forecast as Fraction](Forecast-2-scenario-1.png)
-
-![Forecast ARDS](Forecast-ARDS-2-scenario-1.png)
+### 1st Shutdown
 
 The day of health system crash is close to the time point the shutdown if an ![$R_0$](https://render.githubusercontent.com/render/math?math=%24R_0%24) of 1 after shutdown is assumed.
 
@@ -132,13 +128,19 @@ The day of health system crash is close to the time point the shutdown if an ![$
 
 ![Forecast as Fraction](Forecast-ARDS-4.png)
 
-### Scenario 2 - End of lock down after day 50 without social distancing (worst case)
+#### Scenario 1 - no social distancing and no lock down
+
+![Forecast as Fraction](Forecast-2-scenario-1.png)
+
+![Forecast ARDS](Forecast-ARDS-2-scenario-1.png)
+
+#### Scenario 2 - End of lock down after day 50 without social distancing (worst case)
 
 ![Forecast as Fraction](Forecast-2-scenario-2.png)
 
 ![Forecast ARDS](Forecast-ARDS-2-scenario-2.png)
 
-### Scenario 3 - End of lock down after day 50 with social distancing (better case)
+#### Scenario 3 - End of lock down after day 50 with social distancing (better case)
 
 ![Forecast as Fraction](Forecast-2-scenario-3.png)
 

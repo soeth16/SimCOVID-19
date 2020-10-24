@@ -8,6 +8,8 @@ if (plot_out == 1) pdf("Plots-Data-RKI.pdf")
 
 rki_data <- read.delim("https://opendata.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0.csv", sep=",", header=T)
 
+#rki_data <- as.data.frame(rki_data[rki_data$Bundesland=="Sachsen-Anhalt",])
+
 start_date <- min(strptime(rki_data$Refdatum, "%Y/%m/%d %H:%M:%S", tz="CET"))
 start_date_2 <- strptime("2020/3/1 0:00:00", "%Y/%m/%d %H:%M:%S", tz="CET")
 
@@ -235,13 +237,13 @@ for(i in 1:7)
       ss <- sum(exp(-0.5*((sdata$Time-t2[ii])/sd_tcd)^2) * sdata$ConfirmedCases ) 
       r2[ii] <- ss/s
     }
-    r3 <- r/r2
+    r3 <- (r+1e-12)/r2
     m <- array(1,length(sdata$Time))
     m[sdata$Time > tm] <- phi_m
     
     s <- (r3>0) 
     ss <- c(10:17)+t_0
-    r4 <- r3/quantile((r3/m)[ss], probs=0.5)/m
+    r4 <- r3/quantile((r3/m)[ss], probs=0.5, na.rm=T)/m
     #ss <- (r3>0) & (r > .1)
     #r4 <- r3/quantile((r3/m)[ss], probs=0.25)/m
     d <- (quantile(r4[s], na.rm=T, probs=3/4)-quantile(r4[s], na.rm=T, probs=1/4))/(quantile(t[s], na.rm=T, probs=3/4)-quantile(t[s], na.rm=T, probs=1/4))
@@ -280,7 +282,7 @@ for(i in 1:7)
   phi_d_drift[i] <- rr[[i]]$Drift
   lines(c(-1e9,tm,tm,1e9), c(phi_d_mean[i],phi_d_mean[i],phi_d_mean[i]*phi_m,phi_d_mean[i]*phi_m)*100,lty=3,col=i)
 }
-
+box()
 if (plot_out != 2) title("Death Cases per Day COVID-19 in Germany", 
                          sub=paste("Created by Sören Thiering (",format(Sys.Date(), "%m/%d/%Y"),"). Email: soeren.thiering@hs-anhalt.de",sep=""))
 if (plot_out > 1) dev.off()
@@ -412,7 +414,7 @@ if (plot_out > 1) dev.off()
 if (plot_out == 2) png("Hidden_Cases_per_Day.png", width = 640, height = 480)
 par(mar=c(5,6,7,5)+0.1)
 
-plot(NA,NA, xlab = paste0("Days after (",format(start_date, "%m/%d/%Y"),")"), ylab="Hidden Cases Per Day (%)", xlim = c(0,max(res$Time)), ylim = c(0,500))
+plot(NA,NA, xlab = paste0("Days after (",format(start_date, "%m/%d/%Y"),")"), ylab="Hidden Cases Per Day (%)", xlim = c(min(days),max(res$Time)), ylim = c(0,500))
 
 phi_hidden = t = days
 
@@ -473,6 +475,8 @@ lines(mean,lwd=1.5,lty=2,col="red")
 lines(mean2,lwd=1.5,lty=2,col="blue")
 # Bad Feilnbach
 lines(c(min(data$x),max(data$x)), c(260,260),lwd=1.5,lty=2,col="darkgreen")
+# Kupferzell
+lines(c(min(data$x),max(data$x)), c(390,390),lwd=1.5,lty=2,col="orange")
 
 lines(c(-1e9,1e9), c(100,100),lty=3,col="darkgrey")
 
@@ -480,7 +484,7 @@ for (i in c(0:100)) lines(c(i*7-2,i*7-2), (c(-1e9, 1e9)), type="l", lty = 5, col
 axis(3, c(0:100)*7-2, c(0:100)+1, col="light gray", las=0)  ## las=1 makes horizontal labels
 mtext("Week number (2020/21)",side=3,line=2,las=0)
 
-legend("topleft", legend=c("by death cases", "by untracted cases", "Corona-Monitoring lokal (08/25/2020)"),  col=c("red","blue", "darkgreen"), lwd=2) 
+legend("topleft", legend=c("by death cases", "by untracted cases", "Corona-Monitoring lokal: Bad Feilnbach", "Corona-Monitoring lokal: Kupferzell "),  col=c("red","blue", "darkgreen","orange"), lwd=2) 
 
 
 box()
