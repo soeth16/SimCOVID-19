@@ -21,7 +21,7 @@ setwd("~/SimCOVID-19/")
 # graphical: 0
 # pdf: 1
 # png: 2
-plot_out <- 1
+plot_out <<- 1
 plot_outs <- c(2:0)
 
 #######################################
@@ -29,7 +29,9 @@ plot_outs <- c(2:0)
 #######################################
 library(JuliaCall)
 #JuliaCall::julia_eval("import Pkg; Pkg.add(\"DifferentialEquations\"); nothing")
+#JuliaCall::julia_eval("Pkg.add(\"DiffEqCallbacks\"); nothing")
 #JuliaCall::julia_eval("Pkg.add(\"DiffEqParamEstim\"); nothing")
+#JuliaCall::julia_eval("Pkg.add(\"NLSolversBase\"); nothing")
 #JuliaCall::julia_eval("Pkg.add(\"Optim\"); nothing")
 #JuliaCall::julia_eval("Pkg.add(\"Distributions\"); nothing")
 #JuliaCall::julia_eval("Pkg.add(\"BlackBoxOptim\"); nothing")
@@ -37,7 +39,9 @@ library(JuliaCall)
 #JuliaCall::julia_eval("Pkg.add(\"Distributed\"); nothing")
 #JuliaCall::julia_eval("using Distributed; nothing")
 #JuliaCall::julia_eval("addprocs(8 - nprocs(), topology=:all_to_all); nothing")
+JuliaCall::julia_eval("using NLSolversBase; nothing")
 JuliaCall::julia_eval("using DifferentialEquations; nothing")
+JuliaCall::julia_eval("using DiffEqCallbacks; nothing")
 JuliaCall::julia_eval("using DiffEqParamEstim; nothing")
 JuliaCall::julia_eval("using Optim; nothing")
 JuliaCall::julia_eval("using Distributions; nothing")
@@ -47,7 +51,7 @@ JuliaCall::julia_eval("using DiffEqUncertainty; nothing")
 #######################################
 # Data & Constants & Sitation Analysis 
 #######################################
-tcd <- c(-5.710, -5.685, -5.660, -6.360, -5.830,  0.000, -5.890)
+tcd <<- c(-5.710, -5.685, -5.660, -6.360, -5.830,  0.000, -5.890)
 for (plot_out in plot_outs) source('./Data-RKI.R')
 
 #######################################
