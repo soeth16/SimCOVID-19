@@ -6,9 +6,10 @@ if (plot_out == 1) pdf("Plots-Data-RKI.pdf")
 #   
 #####################################################################################
 
-rki_data <- read.delim("https://opendata.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0.csv", sep=",", header=T)
+rki_data_raw <- read.delim("https://opendata.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0.csv", sep=",", header=T)
 
-#rki_data <- as.data.frame(rki_data[rki_data$Bundesland=="Sachsen-Anhalt",])
+#rki_data <- as.data.frame(rki_data_raw[rki_data$Bundesland=="Sachsen-Anhalt",])
+rki_data <- rki_data_raw
 
 start_date <- min(strptime(rki_data$Refdatum, "%Y/%m/%d %H:%M:%S", tz="CET"))
 start_date_2 <- strptime("2020/3/1 0:00:00", "%Y/%m/%d %H:%M:%S", tz="CET")
@@ -48,7 +49,6 @@ phi_m = 0.83
 
 # confirmed to death (determined by overlapping the two curves)
 td <-10.5
-tcd <- trunc(td)
 # assume incubation time from https://www.ncbi.nlm.nih.gov/pubmed/32150748
 te = 5.1
 ti = 14 # determined by overlapping the two curves
@@ -115,7 +115,7 @@ if (plot_out > 1) dev.off()
 
 ################################
 # Time from Confirmed to Death
-################################
+#######################-#########
 
 if (plot_out == 2) png("Time_from_Confirmed_to_Death.png", width = 640, height = 480)
 par(mar=c(5,6,7,5)+0.1)

@@ -58,28 +58,12 @@ source('./Modell-DDE.R')
 # Modell Fit
 #######################################
 source('./Fit-DDE.R')
+p_monte <- array(NA, dim=c(6,length(p2)) )
+p_monte[1,] <- p2
+for (i_fit in 2:6)
+{
+  source('./Fit-DDE.R')
+  p_monte[i_fit,] <- p2
+}
+print(p_monte)
 
-#######################################
-# Model vs Situation
-#######################################
-for (plot_out in plot_outs) source('./Modell-Situation.R')
-
-#######################################
-# Forecast
-#######################################
-for (plot_out in plot_outs) source('./Forecast.R')
-
-#######################################
-# Scenarios
-#######################################
-for (plot_out in plot_outs) source('./Scenario-1.R')
-for (plot_out in plot_outs) source('./Scenario-2.R')
-for (plot_out in plot_outs) source('./Scenario-3.R')
-for (plot_out in plot_outs) source('./Variant-1.R')
-
-#######################################
-# Publiush
-#######################################
-system("git add *")
-system(paste("git commit -m \"Update Data ", format(Sys.time(), "%m/%d/%Y %H:%M"),"\"", sep=""))
-system("git push")
