@@ -21,27 +21,28 @@ setwd("~/SimCOVID-19/")
 # graphical: 0
 # pdf: 1
 # png: 2
+plot_out <- 1
 plot_outs <- c(2:0)
 
 #######################################
 # Libraries
 #######################################
 library(JuliaCall)
-#JuliaCall::julia_eval("import Pkg; Pkg.add(\"DifferentialEquations\")")
-#JuliaCall::julia_eval("Pkg.add(\"DiffEqParamEstim\")")
-#JuliaCall::julia_eval("Pkg.add(\"Optim\")")
-#JuliaCall::julia_eval("Pkg.add(\"Distributions\")")
-#JuliaCall::julia_eval("Pkg.add(\"BlackBoxOptim\")")
-#JuliaCall::julia_eval("Pkg.add(\"DiffEqUncertainty\")")
-#JuliaCall::julia_eval("Pkg.add(\"Distributed\")")
-#JuliaCall::julia_eval("using Distributed")
-#JuliaCall::julia_eval("addprocs(8 - nprocs(), topology=:all_to_all)")
-JuliaCall::julia_eval("using DifferentialEquations")
-JuliaCall::julia_eval("using DiffEqParamEstim")
-JuliaCall::julia_eval("using Optim")
-JuliaCall::julia_eval("using Distributions")
-JuliaCall::julia_eval("using BlackBoxOptim")
-JuliaCall::julia_eval("using DiffEqUncertainty")
+#JuliaCall::julia_eval("import Pkg; Pkg.add(\"DifferentialEquations\"); nothing")
+#JuliaCall::julia_eval("Pkg.add(\"DiffEqParamEstim\"); nothing")
+#JuliaCall::julia_eval("Pkg.add(\"Optim\"); nothing")
+#JuliaCall::julia_eval("Pkg.add(\"Distributions\"); nothing")
+#JuliaCall::julia_eval("Pkg.add(\"BlackBoxOptim\"); nothing")
+#JuliaCall::julia_eval("Pkg.add(\"DiffEqUncertainty\"); nothing")
+#JuliaCall::julia_eval("Pkg.add(\"Distributed\"); nothing")
+#JuliaCall::julia_eval("using Distributed; nothing")
+#JuliaCall::julia_eval("addprocs(8 - nprocs(), topology=:all_to_all); nothing")
+JuliaCall::julia_eval("using DifferentialEquations; nothing")
+JuliaCall::julia_eval("using DiffEqParamEstim; nothing")
+JuliaCall::julia_eval("using Optim; nothing")
+JuliaCall::julia_eval("using Distributions; nothing")
+JuliaCall::julia_eval("using BlackBoxOptim; nothing")
+JuliaCall::julia_eval("using DiffEqUncertainty; nothing")
 
 #######################################
 # Data & Constants & Sitation Analysis 

@@ -14,14 +14,23 @@
 # Setup
 #######################################
 
+# Base Directory
+if(!dir.exists("~/SimCOVID-19_MonteCarlo/")) dir.create("~/SimCOVID-19_MonteCarlo/", showWarnings = TRUE, recursive = FALSE, mode = "0775")
+if(!file.exists("~/SimCOVID-19_MonteCarlo/Data-RKI.R")) file.copy('./Data-RKI.R', "~/SimCOVID-19_MonteCarlo/Data-RKI.R")
+if(!file.exists("~/SimCOVID-19_MonteCarlo/Modell-DDE.R")) file.copy('./Modell-DDE.R', "~/SimCOVID-19_MonteCarlo/Modell-DDE.R")
+if(!file.exists("~/SimCOVID-19_MonteCarlo/Fit-DDE.R")) file.copy('./Fit-DDE.R', "~/SimCOVID-19_MonteCarlo/Fit-DDE.R")
+setwd("~/SimCOVID-19_MonteCarlo/")
+
 # Working Directory
-setwd("~/SimCOVID-19/")
+now_date <- format(Sys.time(), "%m-%d-%Y_%H:%M:%OS3")
+dir.create(now_date, showWarnings = TRUE, recursive = FALSE, mode = "0775")
+setwd(now_date)
 
 # Output
 # graphical: 0
 # pdf: 1
 # png: 2
-plot_outs <- c(2:0)
+plot_out <- 1
 
 #######################################
 # Libraries
@@ -47,23 +56,31 @@ JuliaCall::julia_eval("using DiffEqUncertainty")
 # Data & Constants & Sitation Analysis 
 #######################################
 tcd <- c(-5.710, -5.685, -5.660, -6.360, -5.830,  0.000, -5.890)
-for (plot_out in plot_outs) source('./Data-RKI.R')
+source('../Data-RKI.R')
 
 #######################################
 # Modell
 #######################################
-source('./Modell-DDE.R')
+source('../Modell-DDE.R')
 
 #######################################
 # Modell Fit
 #######################################
-source('./Fit-DDE.R')
+
+
+source('../Fit-DDE.R')
 p_monte <- array(NA, dim=c(6,length(p2)) )
 p_monte[1,] <- p2
 for (i_fit in 2:6)
 {
-  source('./Fit-DDE.R')
+  setwd("..")
+  now_date <- format(Sys.time(), "%m-%d-%Y_%H:%M:%OS3")
+  dir.create(now_date, showWarnings = TRUE, recursive = FALSE, mode = "0775")
+  setwd(now_date)
+  source('../Fit-DDE.R')
   p_monte[i_fit,] <- p2
 }
-print(p_monte)
 
+setwd("..")
+write_delim(p_monte, "result.csv", append=T, delim="\t")
+print(p_monte)
