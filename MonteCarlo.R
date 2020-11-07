@@ -73,10 +73,10 @@ source('../Modell-DDE.R')
 # Modell Fit
 #######################################
 
-
+p2 <<- 0
 source('../Fit-DDE.R')
 p_monte <<- array(NA, dim=c(6,length(p2)) )
-p_monte[1,] <- p2
+p_monte[1,] <<- p2
 for (i_fit in 2:6)
 {
   setwd("..")
