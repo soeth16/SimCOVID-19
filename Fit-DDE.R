@@ -30,11 +30,11 @@ for (i in 1:10)
 {
   JuliaCall::julia_eval("res1 = bboptimize(opt)")
   p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
-  source('./Modell-Situation.R')
+  if(file.exists('Modell-Situation.R')) source('Modell-Situation.R')
 }
 
 
-p2 <- JuliaCall::julia_eval("p = best_candidate(res1)")
+p2 <<- JuliaCall::julia_eval("p = best_candidate(res1)")
 
 #p2 <- c(0.30971, 11.9905, 0.3, 21.4314, 0.160225, 52.1844, 0.2, 61.2596, 0.182962, 98.9658, 0.346067, 103.072, 0.15, 125.009, 0.249945, 135.757, 0.171135, 162.013, 0.4, 167.06, 0.188391, 186.523, 0.198328)
 p2

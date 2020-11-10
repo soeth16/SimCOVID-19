@@ -164,8 +164,11 @@ S <- n_max - I - E - H - R - D
 t <- cumulative_extrapolated[[8]]$Time[t]-t_0
 t
 data_df <- data.frame(C, D, R)
-data_sd <- abs(data.frame(C = lowess(t,C,f=0.1)$y - data_df$C, D = lowess(t,D,f=0.3)$y - data_df$D, R = lowess(t,R,f=0.3)$y - data_df$R))
-data_df
+data_sd <- abs(data.frame(C = lowess(t,C,f=0.1)$y - data_df$C, D = lowess(t,D,f=0.1)$y - data_df$D, R = lowess(t,R,f=0.1)$y - data_df$R))
+#data_df
+#plot(data_sd$C)
+#plot(data_sd$D)
+#plot(data_sd$R)
 
 p1 <- c(0.3488631, 11.3885073, 0.2633408, 21.5223237, 0.1649659, 52.5617909, 0.1733183, 61.8837740, 0.1553055, 95.7754461, 0.3427507, 103.2323733, 0.1701468, 126.6378092, 0.1844588, 133.9112688, 0.2032979, 164.5808251, 0.3328118, 166.3242064, 0.1967201, 202.4674021, 0.2190007)
 
