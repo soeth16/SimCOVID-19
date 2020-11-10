@@ -17,9 +17,9 @@
 # Base Directory
 setwd("~/SimCOVID-19")
 if(!dir.exists("../SimCOVID-19_MonteCarlo")) dir.create("../SimCOVID-19_MonteCarlo", showWarnings = TRUE, recursive = FALSE, mode = "0775")
-if(!file.exists("../SimCOVID-19_MonteCarlo/Data-RKI.R")) file.copy('Data-RKI.R', "../SimCOVID-19_MonteCarlo/Data-RKI.R")
-if(!file.exists("../SimCOVID-19_MonteCarlo/Modell-DDE.R")) file.copy('Modell-DDE.R', "../SimCOVID-19_MonteCarlo/Modell-DDE.R")
-if(!file.exists("../SimCOVID-19_MonteCarlo/Fit-DDE.R")) file.copy('Fit-DDE.R', "../SimCOVID-19_MonteCarlo/Fit-DDE.R")
+if(!file.exists("../SimCOVID-19_MonteCarlo/Data-RKI.R")) file.copy('Data-RKI.R', "../SimCOVID-19_MonteCarlo/")
+if(!file.exists("../SimCOVID-19_MonteCarlo/Modell-DDE.R")) file.copy('Modell-DDE.R', "../SimCOVID-19_MonteCarlo/")
+if(!file.exists("../SimCOVID-19_MonteCarlo/Fit-DDE.R")) file.copy('Fit-DDE.R', "../SimCOVID-19_MonteCarlo/")
 setwd("../SimCOVID-19_MonteCarlo/")
 dir()
 
